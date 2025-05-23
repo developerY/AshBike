@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		5E67A2992DE1196500D4557E /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 5E67A2982DE1195D00D4557E /* README.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		5E67A2722DE1003500D4557E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		5E67A2612DE1003300D4557E /* AshBike.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AshBike.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E67A2712DE1003500D4557E /* AshBikeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AshBikeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E67A27B2DE1003500D4557E /* AshBikeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AshBikeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E67A2982DE1195D00D4557E /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -80,6 +85,7 @@
 		5E67A2582DE1003300D4557E = {
 			isa = PBXGroup;
 			children = (
+				5E67A2982DE1195D00D4557E /* README.md */,
 				5E67A28E2DE10CE200D4557E /* Docs */,
 				5E67A2632DE1003300D4557E /* AshBike */,
 				5E67A2742DE1003500D4557E /* AshBikeTests */,
@@ -219,6 +225,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5E67A2992DE1196500D4557E /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
