@@ -58,11 +58,12 @@ struct HomeView: View {
 
             // — Map section —
             CollapsibleSection(title: "Map", isExpanded: $showMap) {
-                RouteMapView(route: HomeView.sampleRoute) //$session.routeCoordinates)
-                    .frame(height: 200)
-                    .cornerRadius(8)
-                    .padding(.horizontal)
+              RouteMapView(route: session.routeCoordinates)
+                .frame(height: 200)
+                .cornerRadius(8)
+                .padding(.horizontal)
             }
+
 
             // — E-bike Stats —
             CollapsibleSection(title: "E-bike Stats", isExpanded: $showEbikeStats) {

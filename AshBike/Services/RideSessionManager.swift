@@ -21,10 +21,17 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     var heartRate: Int? = nil      // hook into HealthKit similarly
     var calories: Int = 0          // stub, you can calculate off METs + weight
     
+    var weight: Double = 72
+    private let met: Double = 8.0
+
+    
     private let locationManager = CLLocationManager()
     private var lastLocation: CLLocation?
     private var startDate: Date?
     private var timer: Timer?
+    
+    /// The GPS trace so far
+    var routeCoordinates: [CLLocationCoordinate2D] = []
     
     override init() {
         super.init()
@@ -60,14 +67,40 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         // TODO: finalize HealthKit samples, save ride record
     }
     
+    
+    // Inside RideSessionManager
+
+    /// Return an approximate MET value based on currentSpeed (m/s)
+    private static func metForSpeed(_ speed: Double) -> Double {
+        let kmh = speed * 3.6
+        switch kmh {
+        case ..<10:
+            return 4.0     // light effort (<10 km/h)
+        case 10..<14:
+            return 6.0     // moderate (<14 km/h)
+        case 14..<20:
+            return 8.0     // brisk (<20 km/h)
+        default:
+            return 10.0    // very vigorous (20+ km/h)
+        }
+    }
+
     private func startTimer() {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             guard let start = self.startDate else { return }
+            
+            // update duration & average speed
             self.duration = Date().timeIntervalSince(start)
             if self.duration > 0 {
                 self.avgSpeed = self.distance / self.duration
             }
+
+            // dynamic MET from speed
+            let met = RideSessionManager.metForSpeed(self.currentSpeed)
+            let hours = self.duration / 3600
+            let kcal = met * self.weight * hours
+            self.calories = Int(kcal)
         }
     }
     
@@ -88,6 +121,10 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
             distance += delta
         }
         lastLocation = newLoc
+        
+        
+        // **Append the new point**
+        routeCoordinates.append(newLoc.coordinate)
     }
     
     func locationManager(
