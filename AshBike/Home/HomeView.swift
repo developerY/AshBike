@@ -9,6 +9,9 @@ import SwiftUI
 import MapKit
 
 struct HomeView: View {
+    
+    @State private var session = RideSessionManager()
+
     // MARK: – Live Ride State
     @State private var distance: Double = 0          // in km
     @State private var duration: TimeInterval = 0    // in seconds
@@ -33,7 +36,7 @@ struct HomeView: View {
         VStack(spacing: 16) {
             // — Gauge + Compass —
             ZStack {
-                GaugeView(speed: manager.speed * 3.6)        // your circular gauge
+                GaugeView(speed: session.currentSpeed * 3.6)        // your circular gauge
                     .frame(width: 200, height: 200)
                 CompassView(direction: .degrees(210)) // your mini compass
                     .frame(width: 60, height: 60)
@@ -44,11 +47,11 @@ struct HomeView: View {
             // — Metric Cards —
             HStack(spacing: 12) {
                 MetricCard(label: "Distance",
-                           value: String(format: "%.1f km", distance))
+                           value: String(format: "%.1f km", session.distance / 1000))
                 MetricCard(label: "Duration",
-                           value: formattedDuration(duration))
+                           value: formattedDuration(session.duration))
                 MetricCard(label: "Avg Speed",
-                           value: String(format: "%.1f km/h", avgSpeed))
+                           value: String(format: "%.1f km/h", session.avgSpeed))
             }
 
             HStack(spacing: 12) {
@@ -136,11 +139,26 @@ struct HomeView: View {
 }
 
 // MARK: – Preview
-
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        HomeView()
-            .previewLayout(.sizeThatFits)
+        Group {
+            HomeView()
+                .previewDisplayName("Empty Session")
+            HomeView()
+                .onAppear {
+                    // seed a fake route for preview
+                    let coords = RouteMapView_Previews.sampleRoute
+                    let mgr = RideSessionManager()
+                    mgr.routeCoordinates = coords
+                    mgr.distance = coords.count * 10
+                    mgr.duration = 120
+                    mgr.avgSpeed = mgr.distance / mgr.duration
+                    mgr.currentSpeed = 5
+                    // override the @State initial value
+                    _ = HomeView().session // no longer needed; just illustrative
+                }
+                .previewDisplayName("Sample Session")
+        }
+        .previewLayout(.sizeThatFits)
     }
 }
-
