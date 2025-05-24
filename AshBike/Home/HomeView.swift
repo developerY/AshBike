@@ -6,6 +6,7 @@
 //
 // AshBike/Views/HomeView.swift
 import SwiftUI
+import MapKit
 
 struct HomeView: View {
     // MARK: – Live Ride State
@@ -16,17 +17,29 @@ struct HomeView: View {
     @State private var calories: Int = 0             // in kcal
     @State private var isRunning: Bool = false
     @State private var showEbikeStats: Bool = false
+    @State private var showMap = false
+    
+    @State private var manager = SpeedManager()   // no init needed
 
+    
+    static var sampleRoute: [CLLocationCoordinate2D] = [
+        .init(latitude: 37.3349, longitude: -122.0090),
+        .init(latitude: 37.3350, longitude: -122.0091),
+        .init(latitude: 37.3351, longitude: -122.0092)
+    ]
+    
+    
     var body: some View {
         VStack(spacing: 16) {
             // — Gauge + Compass —
             ZStack {
-                GaugeView(speed: avgSpeed)        // your circular gauge
+                GaugeView(speed: manager.speed * 3.6)        // your circular gauge
                     .frame(width: 200, height: 200)
                 CompassView(direction: .degrees(210)) // your mini compass
                     .frame(width: 60, height: 60)
                     .offset(x: 70, y: -70)
             }
+        
 
             // — Metric Cards —
             HStack(spacing: 12) {
@@ -43,6 +56,15 @@ struct HomeView: View {
                            value: heartRate.map { "\($0) bpm" } ?? "-- bpm")
                 MetricCard(label: "Calories",
                            value: "\(calories) kcal")
+            }
+            
+            // — Map Section —
+            //DisclosureGroup("Map", isExpanded: $showMap) {
+            CollapsibleSection(title: "Map", isExpanded: $showMap) {
+                RouteMapView(route: HomeView.sampleRoute)//session.routeCoordinates)
+                    .frame(height: 200)
+                    .cornerRadius(8)
+                    .padding(.horizontal)
             }
 
             // — Collapsible E-bike Stats —

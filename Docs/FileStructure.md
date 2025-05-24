@@ -14,6 +14,7 @@ YourRepoRoot/
 │   ├── Services/                  ← injected singletons & helpers
 │   │   ├── HealthKitService.swift
 │   │   └── LocationService.swift
+|   │   └── SpeedManager.swift      ← ← ← put it here
 │   │
 │   ├── Views/                     ← all your SwiftUI screens
 │   │   ├── HomeView.swift

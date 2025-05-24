@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1"
+     creator="Xcode"
+     xmlns="http://www.topografix.com/GPX/1/1"
+     xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1">
+
+  <rte>
+    <name>Test Route</name>
+
+    <!-- Point 1 -->
+    <rtept lat="37.33490" lon="-122.00900">
+      <extensions>
+        <gpxtpx:TrackPointExtension>
+          <gpxtpx:speed>0.0</gpxtpx:speed>
+        </gpxtpx:TrackPointExtension>
+      </extensions>
+    </rtept>
+
+    <!-- Point 2 -->
+    <rtept lat="37.33500" lon="-122.00910">
+      <extensions>
+        <gpxtpx:TrackPointExtension>
+          <gpxtpx:speed>2.5</gpxtpx:speed>
+        </gpxtpx:TrackPointExtension>
+      </extensions>
+    </rtept>
+
+    <!-- Point 3 -->
+    <rtept lat="37.33510" lon="-122.00920">
+      <extensions>
+        <gpxtpx:TrackPointExtension>
+          <gpxtpx:speed>5.0</gpxtpx:speed>
+        </gpxtpx:TrackPointExtension>
+      </extensions>
+    </rtept>
+
+    <!-- Point 4 -->
+    <rtept lat="37.33520" lon="-122.00930">
+      <extensions>
+        <gpxtpx:TrackPointExtension>
+          <gpxtpx:speed>7.5</gpxtpx:speed>
+        </gpxtpx:TrackPointExtension>
+      </extensions>
+    </rtept>
+
+    <!-- Point 5 -->
+    <rtept lat="37.33530" lon="-122.00940">
+      <extensions>
+        <gpxtpx:TrackPointExtension>
+          <gpxtpx:speed>10.0</gpxtpx:speed>
+        </gpxtpx:TrackPointExtension>
+      </extensions>
+    </rtept>
+
+    <!-- Point 6 -->
+    <rtept lat="37.33540" lon="-122.00950">
+      <extensions>
+        <gpxtpx:TrackPointExtension>
+          <gpxtpx:speed>12.5</gpxtpx:speed>
+        </gpxtpx:TrackPointExtension>
+      </extensions>
+    </rtept>
+
+  </rte>
+</gpx>
+
