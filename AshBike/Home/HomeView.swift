@@ -10,7 +10,7 @@ import Observation  // for @Observable
 import MapKit
 
 struct HomeView: View {
-    @State private var session = RideSessionManagerHold()  // not @StateObject
+    @State private var session = RideSessionManager()  // not @StateObject
     @State private var showMap = false
     @State private var showEbikeStats = false
 
@@ -48,7 +48,7 @@ struct HomeView: View {
             HStack(spacing: 12) {
                 MetricCard(
                   label: "Heart Rate",
-                  value: session.heartRate.map { "\($0) bpm" } ?? "-- bpm"
+                  value: /*$session.heartRate.map { "\($0) bpm" } ??*/ "-- bpm"
                 )
                 MetricCard(
                   label: "Calories",
@@ -120,7 +120,7 @@ struct HomeView_Previews: PreviewProvider {
                 .onAppear {
                     // seed a fake route for preview
                     let coords = RouteMapView_Previews.sampleRoute
-                    let mgr = RideSessionManagerHold()
+                    let mgr = RideSessionManager()
                     //mgr.routeCoordinates = HomeView.sampleRoute
                     mgr.distance = Double(coords.count) * 10.0
                     mgr.duration = 120

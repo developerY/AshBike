@@ -63,9 +63,9 @@ struct RideSessionView: View {
         .padding()
         .navigationTitle("Ride Session")
         // 3️⃣ As soon as the view appears, wire up the context
-        .onAppear {
+        /*.onAppear {
             sessionManager.modelContext = modelContext
-        }
+        }*/
     }
 
     // MARK: - Actions
@@ -81,7 +81,7 @@ struct RideSessionView: View {
 
     @MainActor
         private func stopTapped() {
-            sessionManager.stopAndSaveRide()   // ← no “context:” label
+            //sessionManager.stopAndSaveRide()   // ← no “context:” label
             isRiding = false
         }
 }
@@ -125,24 +125,6 @@ struct RideStatView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 4)
         .background(RoundedRectangle(cornerRadius: 8).fill(.ultraThinMaterial))
-    }
-}
-
-struct RideMapView: View {
-    let route: [CLLocationCoordinate2D]
-
-    var body: some View {
-        Map(position: .constant(.region(region))) {
-            MapPolyline(coordinates: route)
-                .stroke(.blue, lineWidth: 3)
-        }
-    }
-
-    private var region: MKCoordinateRegion {
-        MKCoordinateRegion(
-            center: route.last ?? CLLocationCoordinate2D(),
-            span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-        )
     }
 }
 
