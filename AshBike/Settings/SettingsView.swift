@@ -21,6 +21,7 @@ final class UserProfile {
        heightCm: Double = 171,
        weightKg: Double = 72)
   {
+      self.id = UUID()
     self.name = name
     self.heightCm = heightCm
     self.weightKg = weightKg
@@ -166,20 +167,39 @@ struct ProfileEditorView: View {
 
 // MARK: — Preview
 
-#Preview {
-  // Create an in-memory container seeded with one profile
-  @MainActor
+// MARK: – Preview Container
+
+@MainActor
+private var previewContainer: ModelContainer = {
+  // 1) Build in-memory config
   let cfg = ModelConfiguration(
     schema: Schema([UserProfile.self]),
-    isStoredInMemoryOnly: true,
-    initialEntries: [UserProfile()]
+    isStoredInMemoryOnly: true
   )
+
+  // 2) Initialize the container
   let mc = try! ModelContainer(
     for: Schema([UserProfile.self]),
     configurations: [cfg]
   )
 
-  SettingsView()
-    .modelContainer(mc)
-}
+  // 3) Seed it with demo data
+  let demoProfiles: [UserProfile] = [
+    UserProfile(name: "Alice"),
+    UserProfile(name: "Bob"),
+    UserProfile(name: "Celia"),
+  ]
 
+  for p in demoProfiles {
+    mc.mainContext.insert(p)
+  }
+
+  return mc
+}()
+
+// MARK: – Preview
+
+#Preview {
+  SettingsView()
+    .modelContainer(previewContainer)
+}
