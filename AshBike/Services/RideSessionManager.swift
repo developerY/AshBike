@@ -8,9 +8,11 @@
 import Foundation
 import CoreLocation
 import Observation
+import SwiftData
 import SwiftUI  // for DateComponentsFormatter if you put formatting here
 
 @Observable
+@MainActor
 final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     // Exposed metrics (meters, seconds, m/s, m/s, bpm, kcal)
     var distance: Double = 0
@@ -33,8 +35,11 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     /// The GPS trace so far
     var routeCoordinates: [CLLocationCoordinate2D] = []
     
-    override init() {
+    private var modelContext: ModelContext?
+    
+    init(modelContext: ModelContext? = nil) {
         super.init()
+        self.modelContext = modelContext
         locationManager.delegate = self
         locationManager.activityType = .fitness
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
@@ -65,6 +70,35 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     func stop() {
         pause()
         // TODO: finalize HealthKit samples, save ride record
+    }
+    
+    @MainActor
+    func stopAndSaveRide() {
+        pause()
+
+        guard let start = startDate else { return }
+
+        let newRide = BikeRide(
+            startTime: start,
+            endTime: Date(),
+            totalDistance: distance,
+            avgSpeed: avgSpeed,
+            maxSpeed: maxSpeed,
+            elevationGain: 0, // add real elevation gain if you track it
+            calories: calories,
+            notes: nil,
+            locations: routeCoordinates.map {
+                RideLocation(timestamp: Date(), lat: $0.latitude, lon: $0.longitude)
+            }
+        )
+
+        modelContext?.insert(newRide)
+
+        do {
+            try modelContext?.save()
+        } catch {
+            print("Error saving ride: \(error)")
+        }
     }
     
     
