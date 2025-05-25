@@ -10,7 +10,7 @@ import Observation  // for @Observable
 import MapKit
 
 struct HomeView: View {
-    @State private var session = RideSessionManager()  // not @StateObject
+    @State private var session = RideSessionManagerHold()  // not @StateObject
     @State private var showMap = false
     @State private var showEbikeStats = false
 
@@ -120,7 +120,7 @@ struct HomeView_Previews: PreviewProvider {
                 .onAppear {
                     // seed a fake route for preview
                     let coords = RouteMapView_Previews.sampleRoute
-                    let mgr = RideSessionManager()
+                    let mgr = RideSessionManagerHold()
                     //mgr.routeCoordinates = HomeView.sampleRoute
                     mgr.distance = Double(coords.count) * 10.0
                     mgr.duration = 120
