@@ -8,7 +8,7 @@ import SwiftUI
 import Charts
 import SwiftData
 
-struct SettingsView: View {
+struct BikeChartView: View {
   // Pull in your saved rides, sorted by date
     @Query(
       sort: [
@@ -139,7 +139,7 @@ private let previewContainer: ModelContainer = {
 
 // 3) Use that container in your preview
 #Preview("Settings w/ Charts") {
-    SettingsView()
+    BikeChartView()
       .modelContainer(previewContainer)
       //.previewDisplayName
 }

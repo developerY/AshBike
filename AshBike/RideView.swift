@@ -5,8 +5,6 @@
 //  Created by Siamak Ashrafi on 5/23/25.
 //
 import SwiftUI
-
-import SwiftUI
 import Charts
 import SwiftData
 
@@ -108,8 +106,8 @@ private let previewContainer: ModelContainer = {
 }()
 
 // 3) Use that container in your preview
-#Preview("Settings w/ Charts") {
-    SettingsView()
+#Preview("Ride Stats w/ Charts") {
+    RideView()
       .modelContainer(previewContainer)
       //.previewDisplayName
 }
