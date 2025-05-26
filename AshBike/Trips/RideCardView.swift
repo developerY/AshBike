@@ -51,7 +51,7 @@ struct RideCardView: View {
       }
 
       HStack {
-        Text("Is Synced = \(ride.isSynced ? "true" : "false")")
+        Text("Is Synced =  False") //  \(ride.isSynced ? "true" : "false")")
           .font(.footnote)
           .foregroundStyle(.secondary)
         Spacer()

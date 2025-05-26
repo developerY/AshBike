@@ -11,8 +11,9 @@ import MapKit
 struct RideListView: View {
   // 1) Fetch all rides, most-recent first
   @Query(
-    sort: \.startTime,
-    order: .reverse
+    // sort: \.startTime,
+    // SortOrder(\.startTime),
+    // order: .reverse
   ) private var rides: [BikeRide]
 
   // 2) SwiftData context
@@ -76,8 +77,23 @@ struct RideListView: View {
 
   private func sync(_ ride: BikeRide) {
     // your real sync logic here…
-    ride.isSynced = true
+    // ride.isSynced = true
     try? modelContext.save()
   }
+}
+
+#Preview {
+  // Seed one ride for preview
+  let ctx = try! ModelContainer(
+    for: Schema([BikeRide.self, RideLocation.self]),
+    configurations: [.init(schema: Schema([BikeRide.self, RideLocation.self]), isStoredInMemoryOnly: true)]
+  ).mainContext
+
+  let demo = makeRandomBikeRide()
+  ctx.insert(demo)
+  try? ctx.save()
+
+  return RideListView()
+    .modelContainer(ctx.container)
 }
 

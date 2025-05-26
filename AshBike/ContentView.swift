@@ -21,7 +21,7 @@ struct ContentView: View {
                 }
                 .tag(Tab.home)
 
-            RideView()      // or LiveRideView()
+            RideLinksView()//RideView()      // or LiveRideView()
                 .tabItem {
                     Label("Ride", systemImage: "bicycle")
                 }

@@ -7,7 +7,7 @@
 import SwiftUI
 import SwiftData
 
-struct RideListView: View {
+struct RideShortListView: View {
     @Query(sort: \BikeRide.startTime, order: .reverse) private var rides: [BikeRide]
 
     var body: some View {
@@ -21,3 +21,6 @@ struct RideListView: View {
     }
 }
 
+#Preview {
+    RideShortListView()
+}
