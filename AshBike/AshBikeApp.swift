@@ -12,7 +12,8 @@ import SwiftData
 struct AshBikeApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            DataExampleItem.self,BikeRide.self
+            DataExampleItem.self, // Example Data
+            BikeRide.self // Bike Data
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
