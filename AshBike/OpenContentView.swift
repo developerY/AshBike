@@ -10,7 +10,7 @@ import SwiftData
 
 struct OpenContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @Query private var items: [DataExampleItem]
 
     var body: some View {
         NavigationSplitView {
@@ -46,8 +46,10 @@ struct OpenContentView: View {
 
     private func addItem() {
         withAnimation {
-            let newItem = Item(timestamp: Date())
+            let newItem = DataExampleItem(timestamp: Date())
+            
             modelContext.insert(newItem)
+            modelContext.insert(bikeItem)
         }
     }
 
@@ -62,5 +64,5 @@ struct OpenContentView: View {
 
 #Preview {
     OpenContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: DataExampleItem.self, inMemory: true)
 }
