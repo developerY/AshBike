@@ -19,41 +19,59 @@ struct RideListView: View {
   // 2) SwiftData context
   @Environment(\.modelContext) private var modelContext
 
-  var body: some View {
-    NavigationStack {
-      ScrollView {
-        LazyVStack(spacing: 12) {
-          ForEach(rides, id: \.id) { ride in
-            RideCardView(
-              ride: ride,
-              onDelete:   { delete(ride) },
-              onSync:     { sync(ride)   }
-            )
-          }
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(rides, id: \.id) { ride in
+                        NavigationLink(value: ride) {
+                            RideCardView(
+                                ride: ride,
+                                onDelete:   { delete(ride) },
+                                onSync:     { sync(ride)   }
+                            )
+                        }
+                        .buttonStyle(.plain)                 // remove default row highlighting
+                        .listStyle(.plain)
+                        .navigationTitle("Bike Rides")
+                        // 3) This links the value (BikeRide) to your detail screen
+                        .navigationDestination(for: BikeRide.self) { ride in
+                            RideDetailView(ride: ride)
+                        }
+                        .toolbar {
+                            // optional “+” for debugging / adding a new random ride
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                Button {
+                                    // your code to create & save a new BikeRide…
+                                } label: {
+                                    Image(systemName: "plus")
+                                }
+                            }
+                        }
+                    }
+                }.padding()
+            }
+            .navigationTitle("Bike Rides")
+            .toolbar {
+                // Add a single ride for debugging
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        addDebugRide()
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+                // Wipe out all rides
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        deleteAllRides()
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                }
+            }
         }
-        .padding()
-      }
-      .navigationTitle("Bike Rides")
-      .toolbar {
-        // Add a single ride for debugging
-        ToolbarItem(placement: .navigationBarTrailing) {
-          Button {
-            addDebugRide()
-          } label: {
-            Image(systemName: "plus")
-          }
-        }
-        // Wipe out all rides
-        ToolbarItem(placement: .navigationBarTrailing) {
-          Button {
-            deleteAllRides()
-          } label: {
-            Image(systemName: "trash")
-          }
-        }
-      }
     }
-  }
 
   // MARK: – Actions
 
