@@ -26,7 +26,7 @@ struct AshBikeApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            OpenContentView()
         }
         .modelContainer(sharedModelContainer)
     }

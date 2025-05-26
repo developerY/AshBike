@@ -6,7 +6,8 @@
 //
 import SwiftUI
 
-struct ContentView: View {
+
+struct ContentViewTab: View {
     @State private var selection: Tab = .home
 
     enum Tab {
@@ -41,16 +42,16 @@ struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         // Preview in both light and dark mode, and on multiple devices
         Group {
-            ContentView()
+            ContentViewTab()
                 .previewDisplayName("iPhone 15 Pro – Light")
                 .previewDevice("iPhone 15 Pro")
             
-            ContentView()
+            ContentViewTab()
                 .preferredColorScheme(.dark)
                 .previewDisplayName("iPhone 15 Pro – Dark")
                 .previewDevice("iPhone 15 Pro")
             
-            ContentView()
+            ContentViewTab()
                 .previewDisplayName("iPad Air (5th gen)")
                 .previewDevice("iPad Air (5th generation)")
         }
