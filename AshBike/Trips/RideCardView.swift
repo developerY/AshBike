@@ -78,3 +78,35 @@ struct RideCardView: View {
   }
 }
 
+/// A simple “card” view for display in the list
+struct RideCardViewSimple: View {
+  let ride: BikeRide
+  let onDelete: () -> Void
+  let onSync:   () -> Void
+  
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack {
+        Text("\(ride.startTime)") // , format: .dateTime.month().day().at().hour().minute())")
+          .font(.headline)
+        Spacer()
+        Text("(\(Int(ride.endTime.timeIntervalSince(ride.startTime)))s)")
+          .font(.subheadline).foregroundStyle(.secondary)
+      }
+      Text("Distance: \(ride.totalDistance / 1000, format: .number.precision(.fractionLength(1))) km")
+      Text("Avg: \(ride.avgSpeed * 3.6, format: .number.precision(.fractionLength(1))) km/h   Max: \(ride.maxSpeed * 3.6, format: .number.precision(.fractionLength(1))) km/h")
+      
+      HStack {
+        Spacer()
+        Button(action: onSync)   { Image(systemName: "arrow.triangle.2.circlepath") }
+        Button(action: onDelete) { Image(systemName: "trash")     }
+      }
+      .buttonStyle(.plain)
+      .font(.title3)
+      .foregroundStyle(.red)
+    }
+    .padding()
+    .background(RoundedRectangle(cornerRadius: 8).fill(.ultraThinMaterial))
+    .shadow(radius: 1)
+  }
+}

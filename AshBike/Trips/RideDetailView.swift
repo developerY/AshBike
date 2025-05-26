@@ -147,6 +147,18 @@ struct RideDetailView: View {
 }
 
 
+
+/// A stub detail view
+struct RideDetailViewSmall: View {
+  let ride: BikeRide
+  var body: some View {
+    Text("Details for ride on \(ride.startTime, format: .dateTime.month().day())")
+      .navigationTitle("Ride Details")
+  }
+}
+
+
+
 // MARK: — Preview with in-memory container
 /*#Preview {
   // 1) Build a sample RideLocation sequence

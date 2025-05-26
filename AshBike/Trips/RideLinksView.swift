@@ -27,6 +27,15 @@ struct RideLinksView: View {
                     NavigationLink("Settings") {
                         SettingsView()
                     }
+                    NavigationLink("Test List") {
+                        //SettingsView()
+                        RideListViewSimple()
+                    }
+                    NavigationLink("Original Item List") {
+                        //SettingsView()
+                        OpenContentView()
+                    }
+                    
                 }
             }
             .listStyle(.insetGrouped)

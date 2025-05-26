@@ -118,6 +118,28 @@ extension RideLocation {
  */
 
 
+// A little helper to create random demo rides -- no args
+func makeRandomBikeRide() -> BikeRide {
+  let start = Date().addingTimeInterval(-Double.random(in: 600...3600))
+  let end   = Date()
+  let dist  = Double.random(in: 500...10_000)
+  let avg   = dist / (end.timeIntervalSince(start))
+  let max   = avg * Double.random(in: 1.1...1.5)
+  return BikeRide(
+    startTime: start,
+    endTime:   end,
+    totalDistance: dist,
+    avgSpeed:      avg,
+    maxSpeed:      max,
+    elevationGain: Double.random(in: 0...200),
+    calories:      Int(avg * 3.6 * 60 / 20), // totally made‐up formula
+    notes:         nil,
+    locations:     []
+  )
+}
+
+
+
 /// Generate a completely random BikeRide for testing / previews
 func makeRandomBikeRide(
   duration: TimeInterval = 3600,  // total ride time in seconds (1 h)

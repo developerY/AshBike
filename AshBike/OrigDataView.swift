@@ -1,17 +1,21 @@
 //
-//  ContentView.swift
+//  ItemsList.swift
 //  AshBike
 //
-//  Created by Siamak Ashrafi on 5/23/25.
+//  Created by Siamak Ashrafi on 5/26/25.
 //
-
 import SwiftUI
 import SwiftData
 
-struct OpenContentView: View {
+struct OrigDataView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [DataExampleItem]
-
+    @State private var selection: Tab = .home
+    
+    enum Tab {
+        case home, ride, settings
+    }
+    
     var body: some View {
         NavigationSplitView {
             List {
@@ -43,25 +47,23 @@ struct OpenContentView: View {
             Text("Select an item")
         }
     }
-
+    
     private func addItem() {
         withAnimation {
             let newItem = DataExampleItem(timestamp: Date())
             modelContext.insert(newItem)
         }
     }
-
+    
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
             for index in offsets {
                 modelContext.delete(items[index])
             }
+            
         }
+        
     }
 }
 
-#Preview {
-    ContentView()
-        .modelContainer(for: DataExampleItem.self, inMemory: true)
-}
 
