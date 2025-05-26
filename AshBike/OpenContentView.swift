@@ -13,37 +13,32 @@ struct OpenContentView: View {
 
     var body: some View {
         NavigationSplitView {
-            // ┌───────────────────────────────────┐
-            // │   PRIMARY COLUMN (sidebar)       │
-            // └───────────────────────────────────┘
             List {
                 ForEach(items) { item in
-                    NavigationLink(value: item) {
-                        Text(item.timestamp,
-                             format: Date.FormatStyle(date: .numeric,
-                                                      time: .standard))
+                    NavigationLink {
+                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                    } label: {
+                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
                     }
                 }
                 .onDelete(perform: deleteItems)
             }
+#if os(macOS)
+            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
+#endif
             .toolbar {
-                // these buttons now live *only* in the sidebar
-  #if os(iOS)
+#if os(iOS)
                 ToolbarItem(placement: .navigationBarTrailing) {
                     EditButton()
                 }
-  #endif
-                ToolbarItem(placement: .navigationBarTrailing) {
+#endif
+                ToolbarItem {
                     Button(action: addItem) {
                         Label("Add Item", systemImage: "plus")
                     }
                 }
             }
-
         } detail: {
-            // ┌───────────────────────────────────┐
-            // │   DETAIL COLUMN                  │
-            // └───────────────────────────────────┘
             Text("Select an item")
         }
     }
@@ -57,8 +52,8 @@ struct OpenContentView: View {
 
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
-            for idx in offsets {
-                modelContext.delete(items[idx])
+            for index in offsets {
+                modelContext.delete(items[index])
             }
         }
     }
@@ -68,5 +63,3 @@ struct OpenContentView: View {
     OpenContentView()
         .modelContainer(for: DataExampleItem.self, inMemory: true)
 }
-
-
