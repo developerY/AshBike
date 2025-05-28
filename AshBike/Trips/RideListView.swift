@@ -16,36 +16,30 @@ struct RideListView: View {
   // 2) SwiftData context for inserts/deletes
   @Environment(\.modelContext) private var modelContext
 
-  var body: some View {
+    var body: some View {
       NavigationStack {
-          ScrollView {
-              LazyVStack(spacing: 12) {
-                  ForEach(rides, id: \.id) { ride in
-                      NavigationLink(value: ride) {
-                          Text("Here is the ride \(ride.id)")
-                          /*RideCardView(
-                           ride: ride,
-                           onDelete: { delete(ride) },
-                           onSync:   { sync(ride)   }
-                           )*/
-                      }
-                      .buttonStyle(.plain)
-                  }
+        ScrollView {
+          LazyVStack(spacing: 12) {
+            ForEach(rides, id: \.id) { ride in
+              NavigationLink(value: ride) {
+                RideCardViewSimple(ride: ride, onDelete: { delete(ride) }, onSync: { /*…*/ })
+                  .frame(maxWidth: .infinity)     // make full-width so taps anywhere register
               }
-              .padding()
+              .buttonStyle(.plain)
+            }
           }
-      } // ← now these attach to the NavigationStack
-      .navigationTitle("Bike Rides")
-      // 3) Detail‐screen push
-      .navigationDestination(for: BikeRide.self) { ride in
-        //Text("D Ride Detail")
-        RideDetailViewSimple(ride: ride)
-      }
-      // 4) Add / Clear toolbar
-      .toolbar {
-        ToolbarItemGroup(placement: .navigationBarTrailing) {
-          Button { addDebugRide() } label: { Image(systemName: "plus") }
-          Button { deleteAllRides() } label: { Image(systemName: "trash") }
+          .padding()
+        }
+        .navigationTitle("Bike Rides")
+        // ← This *must* be inside the same NavigationStack:
+        .navigationDestination(for: BikeRide.self) { ride in
+            RideDetailView(ride: ride)
+        }
+        .toolbar {
+          ToolbarItemGroup(placement: .navigationBarTrailing) {
+            Button { addDebugRide() } label: { Image(systemName: "plus") }
+            Button { deleteAllRides() } label: { Image(systemName: "trash") }
+          }
         }
       }
     }

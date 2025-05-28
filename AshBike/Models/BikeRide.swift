@@ -69,3 +69,15 @@ public class BikeRide: Identifiable {
     }
 }
 
+
+// MARK: – somewhere in your file
+extension BikeRide: Hashable {
+  public static func == (lhs: BikeRide, rhs: BikeRide) -> Bool {
+    lhs.id == rhs.id
+  }
+
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(id)
+  }
+}
+

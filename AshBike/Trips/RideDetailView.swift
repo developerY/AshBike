@@ -25,21 +25,21 @@ struct RideDetailView: View {
   }
 
   // A simple region centered on the last point, with a small span
-  /*private var region: MKCoordinateRegion {
+  private var region: MKCoordinateRegion {
     let center = coordinates.last ?? CLLocationCoordinate2D()
     return MKCoordinateRegion(
       center: center,
       span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
     )
-  }*/
-    let route: [CLLocationCoordinate2D]
+  }
+    //let route: [CLLocationCoordinate2D]
 
-    private var region: MKCoordinateRegion {
+    /*private var region: MKCoordinateRegion {
       MKCoordinateRegion(
         center: route.last ?? .init(),
         span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
       )
-    }
+    }*/
 
   // Formatters
   private let dateFmt: DateIntervalFormatter = {
@@ -160,43 +160,41 @@ struct RideDetailViewSmall: View {
 
 
 // MARK: — Preview with in-memory container
-/*#Preview {
-  // 1) Build a sample RideLocation sequence
-  let locs: [RideLocation] = [
-    RideLocation(timestamp: .now.addingTimeInterval(-300), lat: 37.7749, lon: -122.4194, speed: 5),
-    RideLocation(timestamp: .now.addingTimeInterval(-200), lat: 37.7750, lon: -122.4190, speed: 7),
-    RideLocation(timestamp: .now.addingTimeInterval(-100), lat: 37.7751, lon: -122.4185, speed: 6)
-  ]
+#Preview {
+    // 1) Build a sample RideLocation sequence
+    let locs: [RideLocation] = [
+      RideLocation(timestamp: .now.addingTimeInterval(-300), lat: 37.7749, lon: -122.4194, speed: 5),
+      RideLocation(timestamp: .now.addingTimeInterval(-200), lat: 37.7750, lon: -122.4190, speed: 7),
+      RideLocation(timestamp: .now.addingTimeInterval(-100), lat: 37.7751, lon: -122.4185, speed: 6)
+    ]
 
-  // 2) Create a sample BikeRide
-  let sample = BikeRide(
-    startTime: .now.addingTimeInterval(-600),
-    endTime: .now,
-    totalDistance: 2_500,
-    avgSpeed: 5.0,
-    maxSpeed: 7.0,
-    elevationGain: 20,
-    calories: 120,
-    notes: "Lovely little loop!",
-    locations: locs
-  )
+    // 2) Create a sample BikeRide
+    let sample = BikeRide(
+      startTime: .now.addingTimeInterval(-600),
+      endTime:   .now,
+      totalDistance: 2_500,
+      avgSpeed:      5.0,
+      maxSpeed:      7.0,
+      elevationGain: 20,
+      calories:      120,
+      notes:         "Lovely little loop!",
+      locations:     locs
+    )
 
-  // 3) In-memory container & insert the sample
-  var cfg = ModelConfiguration(
-    schema: Schema([BikeRide.self, RideLocation.self]),
-    isStoredInMemoryOnly: true
-  )
-  let container = try! ModelContainer(
-    for: Schema([BikeRide.self, RideLocation.self]),
-    configurations: [cfg]
-  )
-  // must insert on the main actor
-  await container.mainContext.insert(sample)
+    // 3) Just build an empty in-memory container for the environment
+    let cfg = ModelConfiguration(
+      schema: Schema([BikeRide.self, RideLocation.self]),
+      isStoredInMemoryOnly: true
+    )
+    let container = try! ModelContainer(
+      for: Schema([BikeRide.self, RideLocation.self]),
+      configurations: [cfg]
+    )
 
-  // 4) Show the detail view
-  NavigationStack {
-    RideDetailView(ride: sample)
-      .modelContainer(container)
-  }
-}*/
+    // 4) Render the view, injecting the container into the environment
+    NavigationStack {
+      RideDetailViewSimple(ride: sample)
+    }
+    .modelContainer(container)
+}
 

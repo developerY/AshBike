@@ -110,3 +110,35 @@ struct RideCardViewSimple: View {
     .shadow(radius: 1)
   }
 }
+
+
+#Preview {
+  // 1) Build a sample BikeRide
+  let sampleRide = BikeRide(
+    startTime: .now.addingTimeInterval(-3600),   // 1 h ago
+    endTime:   .now,                             // now
+    totalDistance: 5_200,                        // m
+    avgSpeed:      5.2,                          // m/s
+    maxSpeed:      8.3,                          // m/s
+    elevationGain: 42,                           // m
+    calories:      210,
+    notes:         "Lovely little loop!",
+    locations:     []                            // omit GPS trace for card
+  )
+
+  // 2) Render both cards in a VStack
+  VStack(spacing: 32) {
+    RideCardView(
+      ride: sampleRide,
+      onDelete: { print("delete tapped") },
+      onSync:   { print("sync tapped")   }
+    )
+    RideCardViewSimple(
+      ride: sampleRide,
+      onDelete: { print("deleteSimple tapped") },
+      onSync:   { print("syncSimple tapped")   }
+    )
+  }
+  .padding()
+  .previewLayout(.sizeThatFits)
+}
