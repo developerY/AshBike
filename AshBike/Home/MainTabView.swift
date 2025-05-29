@@ -13,33 +13,27 @@ struct MainTabView: View {
         case home, ride, settings
     }
 
-    
     var body: some View {
         TabView {
-                HomeView()
-                    .tabItem {
-                        Label("Home", systemImage: "house")
-                    }
-                    .tag(Tab.home)
-            
-            
-            RideLinksView()//RideView()      // or LiveRideView()
+            HomeView()
                 .tabItem {
-                    Label("Ride", systemImage: "bicycle")
+                    Label("Home", systemImage: "house")
                 }
-                .tag(Tab.ride)
-            
+                .tag(Tab.home)
+
             RideListView()
                 .tabItem {
                     Label("Open", systemImage: "bicycle")
                 }
-
+                .tag(Tab.ride)
 
             // 3rd tab
-            Text("Settings Screen")
+            SettingsView()
+            //Text("Settings Screen")
                 .tabItem {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
+                .tag(Tab.settings)
         }
     }
 }
@@ -47,4 +41,3 @@ struct MainTabView: View {
 #Preview {
     MainTabView()
 }
-
