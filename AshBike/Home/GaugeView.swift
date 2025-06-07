@@ -12,151 +12,176 @@ struct GaugeView: View {
     var maxSpeed: Double = 60
     
     // Define the angle range for the gauge
-    private let startAngle = Angle(degrees: -225)
+    private let startAngle = Angle(degrees: 135)
     private let endAngle = Angle(degrees: 45)
 
     var body: some View {
-        ZStack {
-            // Background Arc
-            GaugeArc()
-                .stroke(style: StrokeStyle(lineWidth: 20, lineCap: .round))
-                .fill(Color.gray.opacity(0.4))
+        GeometryReader { geometry in
+            let radius = min(geometry.size.width, geometry.size.height) / 2
+            let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
 
-            // Gradient Progress Arc
-            GaugeArc()
-                .trim(from: 0, to: speed / maxSpeed)
-                .stroke(style: StrokeStyle(lineWidth: 20, lineCap: .round))
-                .fill(
-                    AngularGradient(
-                        gradient: Gradient(colors: [.green, .yellow, .orange, .red]),
-                        center: .center,
-                        startAngle: startAngle,
-                        endAngle: endAngle
+            ZStack {
+                // Background Arc
+                GaugeArc()
+                    .stroke(style: StrokeStyle(lineWidth: radius * 0.15, lineCap: .round))
+                    .fill(Color.gray.opacity(0.3))
+
+                // Gradient Progress Arc
+                GaugeArc()
+                    .trim(from: 0, to: min(speed / maxSpeed, 1.0))
+                    .stroke(style: StrokeStyle(lineWidth: radius * 0.15, lineCap: .round))
+                    .fill(
+                        AngularGradient(
+                            gradient: Gradient(colors: [.green, .yellow, .red]),
+                            center: .center,
+                            startAngle: startAngle,
+                            endAngle: endAngle
+                        )
                     )
-                )
 
-            // Ticks and Labels
-            TicksAndLabels(maxSpeed: maxSpeed)
-            
-            // Needle
-            Needle(speed: speed, maxSpeed: maxSpeed)
-                .fill(Color.red)
-                .shadow(radius: 2)
-
-            // Center Display
-            VStack {
-                Text(String(format: "%.0f", speed))
-                    .font(.system(size: 60, weight: .bold))
-                + Text(" km/h")
-                    .font(.system(size: 20, weight: .semibold))
+                // Ticks and Labels
+                TicksAndLabels(center: center, radius: radius)
                 
-                Text(headingString(from: heading))
-                    .font(.system(size: 24, weight: .medium))
-                    .padding(8)
-                    .background(Color.blue.opacity(0.5))
-                    .cornerRadius(8)
-                    .foregroundColor(.white)
+                // Needle
+                Needle(speed: speed, maxSpeed: maxSpeed, radius: radius, center: center)
+                    .fill(Color.red)
+                    .shadow(radius: 2)
+                
+                // Center pivot point for the needle
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: radius * 0.1, height: radius * 0.1)
+
+                // Center Display
+                VStack(spacing: 8) {
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text(String(format: "%.0f", speed))
+                            .font(.system(size: radius * 0.5, weight: .bold))
+                        Text("km/h")
+                            .font(.system(size: radius * 0.15, weight: .semibold))
+                    }
+                    
+                    Text(headingString(from: heading))
+                        .font(.system(size: radius * 0.18, weight: .medium))
+                        .padding(8)
+                        .background(Color.blue.opacity(0.6))
+                        .cornerRadius(8)
+                        .foregroundColor(.white)
+                }
+                .offset(y: radius * 0.1) // Adjust vertical position of center text
             }
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .aspectRatio(1, contentMode: .fit)
     }
 
     private func headingString(from direction: Double) -> String {
         let directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
-        let index = Int((direction + 11.25) / 22.5) % 16
+        let index = Int((direction + 11.25) / 22.5) & 15
         return String(format: "%.0f° %@", direction, directions[index])
     }
 }
 
 // Custom Shape for the Gauge Arc
 struct GaugeArc: Shape {
-    private let startAngle = Angle(degrees: -225)
-    private let endAngle = Angle(degrees: 45)
-
     func path(in rect: CGRect) -> Path {
         var p = Path()
         let center = CGPoint(x: rect.midX, y: rect.midY)
         let radius = min(rect.width, rect.height) / 2
         
-        p.addArc(center: center, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
+        p.addArc(center: center,
+                 radius: radius,
+                 startAngle: Angle(degrees: 135),
+                 endAngle: Angle(degrees: 45),
+                 clockwise: false)
         
         return p
     }
 }
 
-// View for Needle
+// View for Needle - Corrected
 struct Needle: Shape {
     var speed: Double
     var maxSpeed: Double
+    var radius: CGFloat
+    var center: CGPoint
     
-    private let startAngle = Angle(degrees: -225)
-    private let totalAngle = Angle(degrees: 270)
-
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        let center = CGPoint(x: rect.midX, y: rect.midY)
-        let radius = min(rect.width, rect.height) / 2 * 0.9
-
+        let totalAngle = Angle(degrees: 270)
+        let startAngle = Angle(degrees: 135)
+        
         let speedRatio = speed / maxSpeed
         let angle = startAngle + (totalAngle * speedRatio)
 
-        let needleBase = CGPoint(
-            x: center.x - 10,
-            y: center.y
-        )
-        
-        let needleTip = CGPoint(
-            x: center.x + radius,
-            y: center.y
-        )
+        let pointerLength = radius * 0.9
+        let baseWidth: CGFloat = 10
 
-        path.move(to: needleBase)
-        path.addLine(to: needleTip)
-        path.addLine(to: CGPoint(x: center.x + 10, y: center.y))
+        // Create a triangular path pointing horizontally to the right
+        path.move(to: CGPoint(x: center.x, y: center.y - baseWidth / 2))
+        path.addLine(to: CGPoint(x: center.x, y: center.y + baseWidth / 2))
+        path.addLine(to: CGPoint(x: center.x + pointerLength, y: center.y))
+        path.closeSubpath()
         
-        // Apply rotation transform
-        return path.applying(CGAffineTransform(translationX: -center.x, y: -center.y))
-                   .applying(CGAffineTransform(rotationAngle: CGFloat(angle.radians)))
-                   .applying(CGAffineTransform(translationX: center.x, y: center.y))
+        // Rotate the path to the correct angle
+        let rotation = CGAffineTransform(translationX: -center.x, y: -center.y)
+            .rotated(by: CGFloat(angle.radians))
+            .translatedBy(x: center.x, y: center.y)
+        
+        return path.applying(rotation)
     }
 }
 
-
-// View for Ticks and Labels
+// View for Ticks and Labels - Corrected
 struct TicksAndLabels: View {
-    var maxSpeed: Double
+    var center: CGPoint
+    var radius: CGFloat
+    let maxSpeed: Double = 60
     private let tickCount = 7 // 0, 10, 20, 30, 40, 50, 60
     
-    private let startAngle = Angle(degrees: -225)
-    private let totalAngle = Angle(degrees: 270)
-
     var body: some View {
         ZStack {
             ForEach(0..<tickCount) { i in
                 let value = Double(i) * (maxSpeed / Double(tickCount - 1))
-                let angle = startAngle + (totalAngle * (value / maxSpeed))
+                let angle = angleForValue(value)
+                
+                // Calculate position using trigonometry
+                let tickLabelRadius = radius * 0.75
+                let xPos = center.x + tickLabelRadius * cos(CGFloat(angle.radians))
+                let yPos = center.y + tickLabelRadius * sin(CGFloat(angle.radians))
 
-                VStack {
-                    Rectangle()
-                        .fill(Color.primary)
-                        .frame(width: 2, height: 10)
-                    Text(String(format: "%.0f", value))
-                        .font(.caption)
-                }
-                .rotationEffect(angle - .degrees(90))
-                .offset(y: -120) // Adjust this value based on your gauge size
-                .rotationEffect(angle)
+                let tickMarkRadius = radius * 0.9
+                let xTickPos = center.x + tickMarkRadius * cos(CGFloat(angle.radians))
+                let yTickPos = center.y + tickMarkRadius * sin(CGFloat(angle.radians))
+                
+                // Tick Mark
+                Rectangle()
+                    .fill(Color.primary)
+                    .frame(width: 2, height: 10)
+                    .position(x: xTickPos, y: yTickPos)
+                    .rotationEffect(angle + .degrees(90))
+
+                // Label
+                Text(String(format: "%.0f", value))
+                    .font(.caption.bold())
+                    .position(x: xPos, y: yPos)
             }
         }
     }
+    
+    private func angleForValue(_ value: Double) -> Angle {
+        let totalAngle = Angle(degrees: 270)
+        let startAngle = Angle(degrees: 135)
+        return startAngle + (totalAngle * (value / maxSpeed))
+    }
 }
-
 
 struct GaugeView_Previews: PreviewProvider {
     static var previews: some View {
-        GaugeView(speed: 45, heading: 210)
+        GaugeView(speed: 26, heading: 0)
+            .frame(width: 300, height: 300)
             .padding()
-            .background(Color.gray)
+            .background(Color.white)
             .previewLayout(.sizeThatFits)
     }
 }
