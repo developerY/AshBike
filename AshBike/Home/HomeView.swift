@@ -25,8 +25,8 @@ struct HomeView: View {
     var body: some View {
         VStack(spacing: 16) {
             // — Gauge —
-            GaugeView(speed: session.currentSpeed * 3.6)
-                .frame(width: 200, height: 200)
+            GaugeView(speed: session.currentSpeed * 3.6, heading: session.heading)
+                .frame(width: 300, height: 300)
 
             // — Metrics row 1 —
             HStack(spacing: 12) {

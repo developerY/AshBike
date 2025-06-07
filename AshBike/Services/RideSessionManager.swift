@@ -19,6 +19,7 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     var currentSpeed: Double = 0
     var calories: Int = 0
     var routeCoordinates: [CLLocationCoordinate2D] = []
+    var heading: CLLocationDirection = 0 // The current compass heading
     
     var weight: Double = 72
     
@@ -42,10 +43,12 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         startDate = Date()
         startTimer()
         locationManager.startUpdatingLocation()
+        locationManager.startUpdatingHeading() // Start tracking heading
     }
 
     func pause() {
         locationManager.stopUpdatingLocation()
+        locationManager.stopUpdatingHeading() // Stop tracking heading
         timer?.invalidate()
     }
 
@@ -103,7 +106,8 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
             self.calories = Int(kcal)
         }
     }
-
+    
+    // MARK: - CLLocationManagerDelegate
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let newLoc = locations.last else { return }
         currentSpeed = max(0, newLoc.speed)
@@ -114,5 +118,9 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         lastLocation = newLoc
         routeCoordinates.append(newLoc.coordinate)
     }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        // Update the heading, using trueHeading if available
+        self.heading = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
+    }
 }
-
