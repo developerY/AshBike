@@ -19,6 +19,7 @@ struct GaugeView: View {
         GeometryReader { geometry in
             let radius = min(geometry.size.width, geometry.size.height) / 2
             let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
+            let speedProgress = min(speed / maxSpeed, 1.0)
 
             ZStack {
                 // MARK: - Layer 1: Background & Ticks
@@ -28,13 +29,13 @@ struct GaugeView: View {
 
                 TicksAndLabels(center: center, radius: radius)
 
-                // MARK: - Layer 2: Progress Arc
+                // MARK: - Layer 2: Progress Arc (Flipped)
                 GaugeArc()
-                    .trim(from: 0, to: min(speed / maxSpeed, 1.0))
+                    .trim(from: 1.0 - speedProgress, to: 1.0) // Flipped trim
                     .stroke(style: StrokeStyle(lineWidth: radius * 0.15, lineCap: .round))
                     .fill(
                         AngularGradient(
-                            gradient: Gradient(colors: [.green, .yellow, .red]),
+                            gradient: Gradient(colors: [.red, .yellow, .green]), // Flipped gradient
                             center: .center,
                             startAngle: startAngle,
                             endAngle: endAngle
@@ -59,7 +60,7 @@ struct GaugeView: View {
                 }
                 .offset(y: radius * 0.1)
 
-                // MARK: - Layer 4: Needle (drawn directly in the ZStack)
+                // MARK: - Layer 4: Needle (drawn on top of everything else)
                 needlePath(for: speed, in: center, radius: radius)
                     .fill(Color.red)
                     .shadow(radius: 2)
@@ -77,8 +78,9 @@ struct GaugeView: View {
     private func needlePath(for speed: Double, in center: CGPoint, radius: CGFloat) -> Path {
         let totalAngle = Angle(degrees: 270)
         
-        let speedRatio = speed / maxSpeed
-        let angle = startAngle + (totalAngle * speedRatio)
+        // Flip the progress for the needle's angle calculation
+        let progress = 1.0 - (speed / maxSpeed)
+        let angle = startAngle + (totalAngle * progress)
 
         let pointerLength = radius * 0.9
         let baseWidth: CGFloat = 10
@@ -118,7 +120,7 @@ struct GaugeArc: Shape {
     }
 }
 
-// View for Ticks and Labels - This does not need to change
+// View for Ticks and Labels - Updated to be flipped
 struct TicksAndLabels: View {
     var center: CGPoint
     var radius: CGFloat
@@ -131,7 +133,6 @@ struct TicksAndLabels: View {
                 let value = Double(i) * (maxSpeed / Double(tickCount - 1))
                 let angle = angleForValue(value)
                 
-                // Calculate position using trigonometry
                 let tickLabelRadius = radius * 0.75
                 let xPos = center.x + tickLabelRadius * cos(CGFloat(angle.radians))
                 let yPos = center.y + tickLabelRadius * sin(CGFloat(angle.radians))
@@ -140,14 +141,12 @@ struct TicksAndLabels: View {
                 let xTickPos = center.x + tickMarkRadius * cos(CGFloat(angle.radians))
                 let yTickPos = center.y + tickMarkRadius * sin(CGFloat(angle.radians))
                 
-                // Tick Mark
                 Rectangle()
                     .fill(Color.primary)
                     .frame(width: 2, height: 10)
                     .position(x: xTickPos, y: yTickPos)
                     .rotationEffect(angle + .degrees(90))
 
-                // Label
                 Text(String(format: "%.0f", value))
                     .font(.caption.bold())
                     .position(x: xPos, y: yPos)
@@ -155,16 +154,18 @@ struct TicksAndLabels: View {
         }
     }
     
+    // The angle calculation is now flipped
     private func angleForValue(_ value: Double) -> Angle {
         let totalAngle = Angle(degrees: 270)
         let startAngle = Angle(degrees: 135)
-        return startAngle + (totalAngle * (value / maxSpeed))
+        let progress = 1.0 - (value / maxSpeed) // Flipped progress
+        return startAngle + (totalAngle * progress)
     }
 }
 
 struct GaugeView_Previews: PreviewProvider {
     static var previews: some View {
-        GaugeView(speed: 53, heading: 0)
+        GaugeView(speed: 0, heading: 0)
             .frame(width: 300, height: 300)
             .padding()
             .background(Color.white)
