@@ -15,8 +15,13 @@ struct GaugeView: View {
     private let startAngle = Angle(degrees: 135)
     private let endAngle = Angle(degrees: 45)
 
-    // **FIX 2**: Use a standard multi-color gradient
-    private let gaugeGradient = Gradient(colors: [.green, .yellow, .orange, .red])
+    // **FIX**: Use a Gradient with explicit stops for each color "section".
+    private let gaugeGradient = Gradient(stops: [
+        .init(color: .green, location: 0.0),
+        .init(color: .yellow, location: 0.33),
+        .init(color: .orange, location: 0.66),
+        .init(color: .red, location: 1.0)
+    ])
 
     var body: some View {
         GeometryReader { geometry in
