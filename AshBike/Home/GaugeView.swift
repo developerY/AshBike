@@ -77,6 +77,7 @@ struct GaugeView: View {
     /// Constructs and rotates the needle path directly.
     private func needlePath(for speed: Double, in center: CGPoint, radius: CGFloat) -> Path {
         let totalAngle = Angle(degrees: 270)
+        let startAngle = Angle(degrees: 135)
         
         // Flip the progress for the needle's angle calculation
         let progress = 1.0 - (speed / maxSpeed)
@@ -86,9 +87,10 @@ struct GaugeView: View {
         let baseWidth: CGFloat = 10
 
         var path = Path()
-        path.move(to: CGPoint(x: -baseWidth / 2, y: 0))
-        path.addLine(to: CGPoint(x: baseWidth / 2, y: 0))
-        path.addLine(to: CGPoint(x: 0, y: -pointerLength))
+        // Define a triangular path pointing RIGHT (standard 0-degree angle)
+        path.move(to: CGPoint(x: 0, y: -baseWidth / 2))
+        path.addLine(to: CGPoint(x: 0, y: baseWidth / 2))
+        path.addLine(to: CGPoint(x: pointerLength, y: 0))
         path.closeSubpath()
         
         // Rotate and translate the path into position
