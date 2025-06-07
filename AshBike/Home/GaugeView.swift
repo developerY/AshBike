@@ -11,41 +11,48 @@ struct GaugeView: View {
     var heading: Double
     var maxSpeed: Double = 60
 
+    // Define the angle range for the gauge
+    private let startAngle = Angle(degrees: 135)
+    private let endAngle = Angle(degrees: 45)
+
     var body: some View {
         GeometryReader { geometry in
             let radius = min(geometry.size.width, geometry.size.height) / 2
             let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
             let speedProgress = min(speed / maxSpeed, 1.0)
+            let strokeStyle = StrokeStyle(lineWidth: radius * 0.15, lineCap: .round)
 
             ZStack {
                 // MARK: - Layer 1: Background & Ticks
                 GaugeArc()
-                    .stroke(style: StrokeStyle(lineWidth: radius * 0.15, lineCap: .round))
+                    .stroke(style: strokeStyle)
                     .fill(Color.gray.opacity(0.3))
 
                 TicksAndLabels(center: center, radius: radius)
 
-                // MARK: - Layer 2: Progress Arc (Built in Sections)
-                // We create the gradient by overlaying separate trimmed arcs.
-                // This is a workaround for the AngularGradient rendering issue.
-                let strokeStyle = StrokeStyle(lineWidth: radius * 0.15, lineCap: .round)
-
-                // Green to Yellow Section (0% to 50% of the gauge)
-                GaugeArc()
-                    .trim(from: 0, to: 0.5)
-                    .stroke(LinearGradient(gradient: Gradient(colors: [.green, .yellow]), startPoint: .leading, endPoint: .trailing), style: strokeStyle)
-
-                // Yellow to Red Section (50% to 100% of the gauge)
-                GaugeArc()
-                    .trim(from: 0.5, to: 1.0)
-                    .stroke(LinearGradient(gradient: Gradient(colors: [.yellow, .red]), startPoint: .leading, endPoint: .trailing), style: strokeStyle)
+                // MARK: - Layer 2: Progress Arc (Built in Solid Color Sections)
+                // This robust implementation uses separate, solid-colored arcs.
                 
-                // Mask to only show the progress based on speed
+                // Green Section: 0-20 km/h (0.0 -> 0.33)
                 GaugeArc()
-                    .trim(from: 0, to: speedProgress)
-                    .stroke(style: strokeStyle)
-                    .blendMode(.destinationIn) // Use the progress trim as a mask
+                    .trim(from: 0.0, to: min(speedProgress, 0.333))
+                    .stroke(Color.green, style: strokeStyle)
+
+                // Yellow Section: 20-40 km/h (0.33 -> 0.66)
+                GaugeArc()
+                    .trim(from: 0.333, to: min(speedProgress, 0.666))
+                    .stroke(Color.yellow, style: strokeStyle)
                 
+                // Orange Section: 40-50 km/h (0.66 -> 0.83)
+                GaugeArc()
+                    .trim(from: 0.666, to: min(speedProgress, 0.833))
+                    .stroke(Color.orange, style: strokeStyle)
+
+                // Red Section: 50-60 km/h (0.83 -> 1.0)
+                GaugeArc()
+                    .trim(from: 0.833, to: speedProgress)
+                    .stroke(Color.red, style: strokeStyle)
+
                 // MARK: - Layer 3: Center Text Display
                 VStack(spacing: 8) {
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
@@ -79,7 +86,6 @@ struct GaugeView: View {
     }
     
     private func needlePath(for speed: Double, in center: CGPoint, radius: CGFloat) -> Path {
-        let startAngle = Angle(degrees: 135)
         let totalAngle = Angle(degrees: 270)
         let progress = min(speed / maxSpeed, 1.0)
         let angle = startAngle + (totalAngle * progress)
@@ -103,7 +109,7 @@ struct GaugeView: View {
     }
 }
 
-struct GaugeArc: Shape {
+private struct GaugeArc: Shape {
     func path(in rect: CGRect) -> Path {
         var p = Path()
         let center = CGPoint(x: rect.midX, y: rect.midY)
@@ -119,7 +125,7 @@ struct GaugeArc: Shape {
     }
 }
 
-struct TicksAndLabels: View {
+private struct TicksAndLabels: View {
     var center: CGPoint
     var radius: CGFloat
     let maxSpeed: Double = 60
