@@ -15,6 +15,16 @@ struct GaugeView: View {
     private let startAngle = Angle(degrees: 135)
     private let endAngle = Angle(degrees: 45)
 
+    // Define the new color gradient
+    private let gaugeGradient = Gradient(colors: [
+        .green,
+        Color(hue: 0.25, saturation: 0.8, brightness: 0.9), // Yellow-Green
+        .yellow,
+        .orange,
+        .red,
+        Color(hue: 0.0, saturation: 1.0, brightness: 0.6)  // Dark Red
+    ])
+
     var body: some View {
         GeometryReader { geometry in
             let radius = min(geometry.size.width, geometry.size.height) / 2
@@ -29,13 +39,13 @@ struct GaugeView: View {
 
                 TicksAndLabels(center: center, radius: radius)
 
-                // MARK: - Layer 2: Progress Arc (Flipped)
+                // MARK: - Layer 2: Progress Arc (with new gradient)
                 GaugeArc()
-                    .trim(from: 1.0 - speedProgress, to: 1.0) // Flipped trim
+                    .trim(from: 0, to: speedProgress)
                     .stroke(style: StrokeStyle(lineWidth: radius * 0.15, lineCap: .round))
                     .fill(
                         AngularGradient(
-                            gradient: Gradient(colors: [.red, .yellow, .green]), // Flipped gradient
+                            gradient: gaugeGradient,
                             center: .center,
                             startAngle: startAngle,
                             endAngle: endAngle
@@ -45,6 +55,7 @@ struct GaugeView: View {
                 // MARK: - Layer 3: Center Text Display
                 VStack(spacing: 8) {
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        // Display the actual speed, even if the gauge is pegged
                         Text(String(format: "%.0f", speed))
                             .font(.system(size: radius * 0.5, weight: .bold))
                         Text("km/h")
@@ -77,10 +88,9 @@ struct GaugeView: View {
     /// Constructs and rotates the needle path directly.
     private func needlePath(for speed: Double, in center: CGPoint, radius: CGFloat) -> Path {
         let totalAngle = Angle(degrees: 270)
-        let startAngle = Angle(degrees: 135)
         
-        // Flip the progress for the needle's angle calculation
-        let progress = 1.0 - (speed / maxSpeed)
+        // **FIX 1**: Clamp the progress so the needle stops at maxSpeed
+        let progress = min(speed / maxSpeed, 1.0)
         let angle = startAngle + (totalAngle * progress)
 
         let pointerLength = radius * 0.9
@@ -122,7 +132,7 @@ struct GaugeArc: Shape {
     }
 }
 
-// View for Ticks and Labels - Updated to be flipped
+// View for Ticks and Labels
 struct TicksAndLabels: View {
     var center: CGPoint
     var radius: CGFloat
@@ -156,18 +166,17 @@ struct TicksAndLabels: View {
         }
     }
     
-    // The angle calculation is now flipped
     private func angleForValue(_ value: Double) -> Angle {
         let totalAngle = Angle(degrees: 270)
         let startAngle = Angle(degrees: 135)
-        let progress = 1.0 - (value / maxSpeed) // Flipped progress
+        let progress = value / maxSpeed
         return startAngle + (totalAngle * progress)
     }
 }
 
 struct GaugeView_Previews: PreviewProvider {
     static var previews: some View {
-        GaugeView(speed: 0, heading: 0)
+        GaugeView(speed: 121, heading: 0)
             .frame(width: 300, height: 300)
             .padding()
             .background(Color.white)
