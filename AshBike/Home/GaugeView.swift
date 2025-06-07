@@ -10,70 +10,89 @@ struct GaugeView: View {
     var speed: Double
     var heading: Double
     var maxSpeed: Double = 60
-    
+
     // Define the angle range for the gauge
     private let startAngle = Angle(degrees: 135)
     private let endAngle = Angle(degrees: 45)
 
     var body: some View {
-            GeometryReader { geometry in
-                let radius = min(geometry.size.width, geometry.size.height) / 2
-                let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
+        GeometryReader { geometry in
+            let radius = min(geometry.size.width, geometry.size.height) / 2
+            let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
 
-                ZStack {
-                    // MARK: - Layer 1: Background & Ticks
-                    GaugeArc()
-                        .stroke(style: StrokeStyle(lineWidth: radius * 0.15, lineCap: .round))
-                        .fill(Color.gray.opacity(0.3))
+            ZStack {
+                // MARK: - Layer 1: Background & Ticks
+                GaugeArc()
+                    .stroke(style: StrokeStyle(lineWidth: radius * 0.15, lineCap: .round))
+                    .fill(Color.gray.opacity(0.3))
 
-                    TicksAndLabels(center: center, radius: radius)
+                TicksAndLabels(center: center, radius: radius)
 
-                    // MARK: - Layer 2: Progress Arc
-                    GaugeArc()
-                        .trim(from: 0, to: min(speed / maxSpeed, 1.0))
-                        .stroke(style: StrokeStyle(lineWidth: radius * 0.15, lineCap: .round))
-                        .fill(
-                            AngularGradient(
-                                gradient: Gradient(colors: [.green, .yellow, .red]),
-                                center: .center,
-                                startAngle: Angle(degrees: 135),
-                                endAngle: Angle(degrees: 45)
-                            )
+                // MARK: - Layer 2: Progress Arc
+                GaugeArc()
+                    .trim(from: 0, to: min(speed / maxSpeed, 1.0))
+                    .stroke(style: StrokeStyle(lineWidth: radius * 0.15, lineCap: .round))
+                    .fill(
+                        AngularGradient(
+                            gradient: Gradient(colors: [.green, .yellow, .red]),
+                            center: .center,
+                            startAngle: startAngle,
+                            endAngle: endAngle
                         )
-                    
-                    // MARK: - Layer 3: Center Text Display
-                    VStack(spacing: 8) {
-                        HStack(alignment: .firstTextBaseline, spacing: 2) {
-                            Text(String(format: "%.0f", speed))
-                                .font(.system(size: radius * 0.5, weight: .bold))
-                            Text("km/h")
-                                .font(.system(size: radius * 0.15, weight: .semibold))
-                        }
-                        
-                        Text(headingString(from: heading))
-                            .font(.system(size: radius * 0.18, weight: .medium))
-                            .padding(8)
-                            .background(Color.blue.opacity(0.6))
-                            .cornerRadius(8)
-                            .foregroundColor(.white)
+                    )
+                
+                // MARK: - Layer 3: Center Text Display
+                VStack(spacing: 8) {
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text(String(format: "%.0f", speed))
+                            .font(.system(size: radius * 0.5, weight: .bold))
+                        Text("km/h")
+                            .font(.system(size: radius * 0.15, weight: .semibold))
                     }
-                    .offset(y: radius * 0.1)
-
-                    // MARK: - Layer 4: Needle (drawn on top of everything else)
-                    Needle(speed: speed, maxSpeed: maxSpeed)
-                        .fill(Color.red)
-                        .shadow(radius: 2)
                     
-                    // MARK: - Layer 5: Pivot Point (drawn on top of the needle)
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: radius * 0.1, height: radius * 0.1)
-
+                    Text(headingString(from: heading))
+                        .font(.system(size: radius * 0.18, weight: .medium))
+                        .padding(8)
+                        .background(Color.blue.opacity(0.6))
+                        .cornerRadius(8)
+                        .foregroundColor(.white)
                 }
-                .frame(width: geometry.size.width, height: geometry.size.height)
+                .offset(y: radius * 0.1)
+
+                // MARK: - Layer 4: Needle (drawn directly in the ZStack)
+                needlePath(for: speed, in: center, radius: radius)
+                    .fill(Color.red)
+                    .shadow(radius: 2)
+                
+                // MARK: - Layer 5: Pivot Point (drawn on top of the needle)
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: radius * 0.1, height: radius * 0.1)
             }
-            .aspectRatio(1, contentMode: .fit)
         }
+        .aspectRatio(1, contentMode: .fit)
+    }
+    
+    /// Constructs and rotates the needle path directly.
+    private func needlePath(for speed: Double, in center: CGPoint, radius: CGFloat) -> Path {
+        let totalAngle = Angle(degrees: 270)
+        
+        let speedRatio = speed / maxSpeed
+        let angle = startAngle + (totalAngle * speedRatio)
+
+        let pointerLength = radius * 0.9
+        let baseWidth: CGFloat = 10
+
+        var path = Path()
+        path.move(to: CGPoint(x: -baseWidth / 2, y: 0))
+        path.addLine(to: CGPoint(x: baseWidth / 2, y: 0))
+        path.addLine(to: CGPoint(x: 0, y: -pointerLength))
+        path.closeSubpath()
+        
+        // Rotate and translate the path into position
+        return path.applying(CGAffineTransform(rotationAngle: CGFloat(angle.radians)))
+                   .applying(CGAffineTransform(translationX: center.x, y: center.y))
+    }
 
     private func headingString(from direction: Double) -> String {
         let directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
@@ -99,45 +118,7 @@ struct GaugeArc: Shape {
     }
 }
 
-// View for Needle - Corrected for Centering
-struct Needle: Shape {
-    var speed: Double
-    var maxSpeed: Double
-    
-    func path(in rect: CGRect) -> Path {
-        // Calculate center and radius from the provided rect
-        let center = CGPoint(x: rect.midX, y: rect.midY)
-        let radius = min(rect.width, rect.height) / 2
-
-        // Define angles
-        let totalAngle = Angle(degrees: 270)
-        let startAngle = Angle(degrees: 135)
-        
-        // Calculate the needle's angle
-        let speedRatio = speed / maxSpeed
-        let angle = startAngle + (totalAngle * speedRatio)
-
-        // Define the needle's shape relative to the center
-        let pointerLength = radius * 0.9
-        let baseWidth: CGFloat = 10
-
-        var path = Path()
-        // Create a triangular path at the center, pointing right
-        path.move(to: CGPoint(x: center.x, y: center.y - baseWidth / 2))
-        path.addLine(to: CGPoint(x: center.x, y: center.y + baseWidth / 2))
-        path.addLine(to: CGPoint(x: center.x + pointerLength, y: center.y))
-        path.closeSubpath()
-        
-        // Rotate the path around its own center
-        let rotation = CGAffineTransform(translationX: -center.x, y: -center.y)
-            .rotated(by: CGFloat(angle.radians))
-            .translatedBy(x: center.x, y: center.y)
-        
-        return path.applying(rotation)
-    }
-}
-
-// View for Ticks and Labels - Corrected
+// View for Ticks and Labels - This does not need to change
 struct TicksAndLabels: View {
     var center: CGPoint
     var radius: CGFloat
@@ -183,7 +164,7 @@ struct TicksAndLabels: View {
 
 struct GaugeView_Previews: PreviewProvider {
     static var previews: some View {
-        GaugeView(speed: 26, heading: 0)
+        GaugeView(speed: 53, heading: 0)
             .frame(width: 300, height: 300)
             .padding()
             .background(Color.white)
