@@ -15,15 +15,8 @@ struct GaugeView: View {
     private let startAngle = Angle(degrees: 135)
     private let endAngle = Angle(degrees: 45)
 
-    // Define the new color gradient
-    private let gaugeGradient = Gradient(colors: [
-        .green,
-        Color(hue: 0.25, saturation: 0.8, brightness: 0.9), // Yellow-Green
-        .yellow,
-        .orange,
-        .red,
-        Color(hue: 0.0, saturation: 1.0, brightness: 0.6)  // Dark Red
-    ])
+    // **FIX 2**: Use a standard multi-color gradient
+    private let gaugeGradient = Gradient(colors: [.green, .yellow, .orange, .red])
 
     var body: some View {
         GeometryReader { geometry in
@@ -89,7 +82,7 @@ struct GaugeView: View {
     private func needlePath(for speed: Double, in center: CGPoint, radius: CGFloat) -> Path {
         let totalAngle = Angle(degrees: 270)
         
-        // **FIX 1**: Clamp the progress so the needle stops at maxSpeed
+        // Clamp the progress so the needle stops at maxSpeed
         let progress = min(speed / maxSpeed, 1.0)
         let angle = startAngle + (totalAngle * progress)
 
