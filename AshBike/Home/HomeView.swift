@@ -7,19 +7,18 @@
 import SwiftUI
 import Observation
 import MapKit
-import SwiftData // Import SwiftData to use ModelContext
+import SwiftData
 
 struct HomeView: View {
+    // Use @State instead of @StateObject for the new @Observable model
     @State private var session = RideSessionManager()
-    @Environment(\.modelContext) private var modelContext // Get the model context from the environment
+    @Environment(\.modelContext) private var modelContext
     
     // State for the accordion sections
     private enum ExpandedSection {
         case metrics, ebike
     }
     @State private var expandedSection: ExpandedSection? = .metrics
-    
-    // State to control the map's bottom sheet presentation
     @State private var isShowingMapSheet = false
 
     var body: some View {
@@ -82,14 +81,16 @@ struct HomeView: View {
             
             // — Controls —
             HStack(spacing: 40) {
+                // The Play button is disabled if a ride is already in progress
                 Button(action: { session.start() }) {
                     Image(systemName: "play.fill")
                         .font(.largeTitle)
                         .frame(width: 60, height: 60)
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(session.isRecording)
 
-                // The Stop button now calls the new save function
+                // The Stop button is disabled if a ride is NOT in progress
                 Button(action: {
                     session.stopAndSave(context: modelContext)
                 }) {
@@ -98,7 +99,7 @@ struct HomeView: View {
                         .frame(width: 60, height: 60)
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(session.duration == 0)
+                .disabled(!session.isRecording)
             }
             .padding()
             .background(.bar)
