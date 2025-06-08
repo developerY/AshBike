@@ -74,18 +74,23 @@ struct GaugeView: View {
                     .frame(width: radius * 0.1, height: radius * 0.1)
                 
                 // MARK: - Layer 6: Map Icon Button
-                // This button is now aligned to the bottom-trailing corner of the ZStack.
-                Button(action: onMapButtonTapped) {
-                    Image(systemName: "map.fill")
-                        .font(.title2)
-                        .padding()
-                        .background(.thinMaterial)
-                        .foregroundColor(.secondary)
-                        .clipShape(Circle())
-                        .shadow(radius: 3)
+                // This VStack/HStack with Spacers will push the button to the bottom-right corner.
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button(action: onMapButtonTapped) {
+                            Image(systemName: "map.fill")
+                                .font(.title2)
+                                .padding()
+                                .background(.thinMaterial)
+                                .foregroundColor(.secondary)
+                                .clipShape(Circle())
+                                .shadow(radius: 3)
+                        }
+                        .padding([.bottom, .trailing]) // Apply padding to keep it from the edges
+                    }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .padding()
             }
         }
         .aspectRatio(1, contentMode: .fit)
