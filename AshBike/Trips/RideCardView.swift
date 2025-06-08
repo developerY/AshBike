@@ -78,15 +78,11 @@ struct RideCardView: View {
   }
 }
 
-/// A simple “card” view for display in the list
 struct RideCardViewSimple: View {
     let ride: BikeRide
+    let isSynced: Bool // Receives status from the parent
     let onDelete: () -> Void
     let onSync: () -> Void
-    
-    // State to hold the sync status from HealthKit
-    @State private var isSynced = false
-    private let healthKitService = HealthKitService()
   
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -103,6 +99,7 @@ struct RideCardViewSimple: View {
             HStack {
                 Spacer()
                 
+                // The view now simply reflects the isSynced property
                 if isSynced {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
@@ -126,13 +123,6 @@ struct RideCardViewSimple: View {
         .padding()
         .background(RoundedRectangle(cornerRadius: 8).fill(.ultraThinMaterial))
         .shadow(radius: 1)
-        .onAppear(perform: checkSyncStatus) // Check status when the card appears
-    }
-    
-    private func checkSyncStatus() {
-        healthKitService.checkIfRideIsSynced(ride: ride) { synced in
-            self.isSynced = synced
-        }
     }
 }
 
@@ -159,7 +149,7 @@ struct RideCardViewSimple: View {
       onSync:   { print("sync tapped")   }
     )
     RideCardViewSimple(
-      ride: sampleRide,
+        ride: sampleRide, isSynced: true,
       onDelete: { print("deleteSimple tapped") },
       onSync:   { print("syncSimple tapped")   }
     )

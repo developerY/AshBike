@@ -44,6 +44,37 @@ class HealthKitService {
         }
         healthStore.execute(query)
     }
+    
+    // NEW: More efficient batch query for checking sync status
+        func fetchSyncStatus(for rides: [BikeRide], completion: @escaping (Set<UUID>) -> Void) {
+            let rideIDs = rides.map { $0.id.uuidString }
+            guard !rideIDs.isEmpty else {
+                completion([])
+                return
+            }
+            
+            let predicate = HKQuery.predicateForObjects(withMetadataKey: rideIdentifierKey, allowedValues: rideIDs)
+            
+            let query = HKSampleQuery(sampleType: .workoutType(), predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { (query, samples, error) in
+                guard let syncedWorkouts = samples as? [HKWorkout], error == nil else {
+                    DispatchQueue.main.async { completion([]) }
+                    return
+                }
+                
+                // Extract the original UUIDs from the workout metadata
+                let syncedIDs = syncedWorkouts.compactMap { workout -> UUID? in
+                    if let idString = workout.metadata?[self.rideIdentifierKey] as? String {
+                        return UUID(uuidString: idString)
+                    }
+                    return nil
+                }
+                
+                DispatchQueue.main.async {
+                    completion(Set(syncedIDs))
+                }
+            }
+            healthStore.execute(query)
+        }
 
     func save(bikeRide: BikeRide, completion: @escaping (Bool, Error?) -> Void) {
         let configuration = HKWorkoutConfiguration()
