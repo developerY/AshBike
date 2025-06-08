@@ -4,75 +4,97 @@
 //
 //  Created by Siamak Ashrafi on 5/23/25.
 //
-// AshBike/Views/HomeView.swift
 import SwiftUI
-import Observation  // for @Observable
+import Observation
 import MapKit
 
 struct HomeView: View {
-    @State private var session = RideSessionManager()  // not @StateObject
-    @State private var showMap = false
-    @State private var showEbikeStats = false
+    @State private var session = RideSessionManager()
+    
+    // State to manage which section is expanded. Only one can be open at a time.
+    private enum ExpandedSection {
+        case metrics, map, ebike
+    }
+    @State private var expandedSection: ExpandedSection? = .metrics
 
-    
-    static var sampleRoute: [CLLocationCoordinate2D] = [
-        .init(latitude: 37.3349, longitude: -122.0090),
-        .init(latitude: 37.3350, longitude: -122.0091),
-        .init(latitude: 37.3351, longitude: -122.0092)
-    ]
-    
-    
     var body: some View {
         VStack(spacing: 16) {
             // — Gauge —
             GaugeView(speed: session.currentSpeed * 3.6, heading: session.heading)
                 .frame(width: 300, height: 300)
+                .padding(.horizontal)
 
-            // — Metrics row 1 —
-            HStack(spacing: 12) {
-                MetricCard(
-                  label: "Distance",
-                  value: String(format: "%.1f km", session.distance / 1000)
+            // — Live Metrics Section —
+            CollapsibleSection(
+                title: "Live Metrics",
+                isExpanded: Binding(
+                    get: { expandedSection == .metrics },
+                    set: { isExpanding in expandedSection = isExpanding ? .metrics : nil }
                 )
-                MetricCard(
-                  label: "Duration",
-                  value: formattedDuration(session.duration)
-                )
-                MetricCard(
-                  label: "Avg Speed",
-                  value: String(format: "%.1f km/h", session.avgSpeed * 3.6)
-                )
+            ) {
+                VStack {
+                    HStack(spacing: 12) {
+                        MetricCard(
+                          label: "Distance",
+                          value: String(format: "%.1f km", session.distance / 1000)
+                        )
+                        MetricCard(
+                          label: "Duration",
+                          value: formattedDuration(session.duration)
+                        )
+                        MetricCard(
+                          label: "Avg Speed",
+                          value: String(format: "%.1f km/h", session.avgSpeed * 3.6)
+                        )
+                    }
+                    HStack(spacing: 12) {
+                        MetricCard(
+                          label: "Heart Rate",
+                          value: "-- bpm"
+                        )
+                        MetricCard(
+                          label: "Calories",
+                          value: "\(session.calories) kcal"
+                        )
+                    }
+                }
+                .padding(.top, 8)
             }
-
-            // — Metrics row 2 —
-            HStack(spacing: 12) {
-                MetricCard(
-                  label: "Heart Rate",
-                  value: /*$session.heartRate.map { "\($0) bpm" } ??*/ "-- bpm"
-                )
-                MetricCard(
-                  label: "Calories",
-                  value: "\(session.calories) kcal"
-                )
-            }
+            .padding(.horizontal)
+            
 
             // — Map section —
-            CollapsibleSection(title: "Map", isExpanded: $showMap) {
+            CollapsibleSection(
+                title: "Map",
+                isExpanded: Binding(
+                    get: { expandedSection == .map },
+                    set: { isExpanding in expandedSection = isExpanding ? .map : nil }
+                )
+            ) {
               RouteMapView(route: session.routeCoordinates)
                 .frame(height: 200)
                 .cornerRadius(8)
-                .padding(.horizontal)
+                .padding(.top, 8)
             }
+            .padding(.horizontal)
 
 
             // — E-bike Stats —
-            CollapsibleSection(title: "E-bike Stats", isExpanded: $showEbikeStats) {
+            CollapsibleSection(
+                title: "E-bike Stats",
+                isExpanded: Binding(
+                    get: { expandedSection == .ebike },
+                    set: { isExpanding in expandedSection = isExpanding ? .ebike : nil }
+                )
+            ) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Battery: --%")
                     Text("Motor Power: -- W")
                 }
-                .padding(.horizontal)
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .padding(.horizontal)
 
             Spacer()
 
@@ -98,7 +120,7 @@ struct HomeView: View {
                 .disabled(session.duration == 0)
             }
         }
-        .padding()
+        .padding(.vertical)
     }
 
     private func formattedDuration(_ sec: TimeInterval) -> String {
@@ -113,24 +135,6 @@ struct HomeView: View {
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        Group {
-            HomeView()
-                .previewDisplayName("Empty Session")
-            HomeView()
-                .onAppear {
-                    // seed a fake route for preview
-                    let coords = RouteMapView_Previews.sampleRoute
-                    let mgr = RideSessionManager()
-                    //mgr.routeCoordinates = HomeView.sampleRoute
-                    mgr.distance = Double(coords.count) * 10.0
-                    mgr.duration = 120
-                    mgr.avgSpeed = mgr.distance / mgr.duration
-                    mgr.currentSpeed = 5
-                    // override the @State initial value
-                    // _ = HomeView().session // no longer needed; just illustrative
-                }
-                .previewDisplayName("Sample Session")
-        }
-        .previewLayout(.sizeThatFits)
+        HomeView()
     }
 }
