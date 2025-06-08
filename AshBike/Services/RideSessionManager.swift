@@ -47,6 +47,7 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
 
     // Call this to begin recording a ride
     func start() {
+        guard !isRecording else { return } // Prevent starting a new ride if one is active
         // Reset all recording metrics for a new ride
         distance = 0
         duration = 0
@@ -103,7 +104,7 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
             totalDistance: distance,
             avgSpeed: avgSpeed,
             maxSpeed: maxSpeed,
-            elevationGain: 0,
+            elevationGain: 0, // Placeholder
             calories: calories,
             notes: nil,
             locations: routeCoordinates.map {

@@ -9,26 +9,22 @@ import SwiftData
 import MapKit
 
 struct RideSessionView: View {
-    // 1️⃣ Grab the live SwiftData context
-    @Environment(\.modelContext) private var modelContext    // now the compiler knows \.modelContext
-
-    
-    // 2️⃣ Hold your @Observable manager in @State
+    @Environment(\.modelContext) private var modelContext
     @State private var sessionManager = RideSessionManager()
-    @State private var isRiding = false
     
     var body: some View {
         VStack(spacing: 16) {
-            Gauge(value: sessionManager.currentSpeed, in: 0...40) {
+            Gauge(value: sessionManager.currentSpeed * 3.6, in: 0...60) {
                 Text("Speed (km/h)")
             }
             .gaugeStyle(.accessoryCircular)
-            .tint(.blue)
-            .scaleEffect(2)
+            .tint(Color.blue)
+            .scaleEffect(2.0)
+            .padding(.vertical)
 
             VStack(spacing: 12) {
                 RideStatView(label: "Distance", value: sessionManager.distance / 1000, unit: "km")
-                RideStatView(label: "Duration", value: sessionManager.duration, unit: "min", format: .time)
+                RideStatView(label: "Duration", value: sessionManager.duration, unit: nil, format: .time)
                 RideStatView(label: "Calories", value: Double(sessionManager.calories), unit: "kcal")
             }
 
@@ -41,54 +37,39 @@ struct RideSessionView: View {
             Spacer()
 
             HStack(spacing: 40) {
-                Button(action: startPauseTapped) {
-                    Image(systemName: isRiding ? "pause.fill" : "play.fill")
+                Button(action: {
+                    sessionManager.start()
+                }) {
+                    Image(systemName: "play.fill")
                         .font(.title)
                         .foregroundStyle(.white)
                         .padding()
-                        .background(isRiding ? .orange : .green)
+                        .background(Color.green)
                         .clipShape(Circle())
                 }
+                .disabled(sessionManager.isRecording)
 
-                Button(action: stopTapped) {
+                Button(action: {
+                    sessionManager.stopAndSave(context: modelContext)
+                }) {
                     Image(systemName: "stop.fill")
                         .font(.title)
                         .foregroundStyle(.white)
                         .padding()
-                        .background(.red)
+                        .background(Color.red)
                         .clipShape(Circle())
                 }
+                .disabled(!sessionManager.isRecording)
             }
         }
         .padding()
-        .navigationTitle("Ride Session")
-        // 3️⃣ As soon as the view appears, wire up the context
-        /*.onAppear {
-            sessionManager.modelContext = modelContext
-        }*/
+        .navigationTitle("Record a Ride")
     }
-
-    // MARK: - Actions
-
-    private func startPauseTapped() {
-        if isRiding {
-            sessionManager.pause()
-        } else {
-            sessionManager.start()
-        }
-        isRiding.toggle()
-    }
-
-    @MainActor
-        private func stopTapped() {
-            //sessionManager.stopAndSaveRide()   // ← no “context:” label
-            isRiding = false
-        }
 }
 
 // MARK: - Subviews
 
-struct RideStatView: View {
+fileprivate struct RideStatView: View {
     let label: String
     let value: Double
     let unit: String?
@@ -104,36 +85,42 @@ struct RideStatView: View {
             return String(format: "%.1f", value)
         case .time:
             let formatter = DateComponentsFormatter()
-            formatter.unitsStyle = .full
-            formatter.includesApproximationPhrase = true
-            formatter.includesTimeRemainingPhrase = true
-            formatter.allowedUnits = [.minute]
-
+            formatter.unitsStyle = .positional
+            formatter.allowedUnits = [.hour, .minute, .second]
+            formatter.zeroFormattingBehavior = .pad
             return formatter.string(from: value) ?? "0:00"
         }
     }
 
     var body: some View {
-        VStack {
-            Text(formattedValue)
-                .font(.title2)
-                .bold()
+        HStack {
             Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.headline)
+            Spacer()
+            if let unit = unit {
+                Text(formattedValue)
+                    .font(.title3.bold().monospacedDigit())
+                Text(unit)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text(formattedValue)
+                    .font(.title3.bold().monospacedDigit())
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 4)
+        .padding()
         .background(RoundedRectangle(cornerRadius: 8).fill(.ultraThinMaterial))
     }
 }
 
-// MARK: - Preview
 
 #Preview {
-    NavigationStack {
+    // This preview needs a model container to function.
+    let config = ModelConfiguration(schema: Schema([BikeRide.self]), isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: Schema([BikeRide.self]), configurations: [config])
+
+    return NavigationStack {
         RideSessionView()
-            .modelContainer(for: BikeRide.self)
+            .modelContainer(container)
     }
 }
-
