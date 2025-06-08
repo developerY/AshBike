@@ -59,7 +59,7 @@ struct RideListView: View {
         }
     }
     
-    // MARK: - Actions
+    // ... (addDebugRide, delete, deleteAllRides, requestHealthKitPermission functions remain the same) ...
     
     private func addDebugRide() {
         let newRide = makeRandomBikeRide()
@@ -76,27 +76,24 @@ struct RideListView: View {
         try? modelContext.delete(model: BikeRide.self)
     }
     
-    // MARK: - HealthKit Actions
-    
     private func requestHealthKitPermission() {
-        healthKitService.requestAuthorization { success, error in
-            if let error = error {
-                print("HealthKit Auth Error: \(error.localizedDescription)")
-            }
-            if success {
-                print("HealthKit authorization successful.")
-            }
-        }
+        healthKitService.requestAuthorization { _, _ in }
     }
     
+    // UPDATED: This function now updates the ride's sync status
     private func sync(ride: BikeRide) {
-        healthKitService.save(bikeRide: ride) { [self] success, error in
+        healthKitService.save(bikeRide: ride) { success, error in
             if success {
+                // Set the property on the specific ride instance
+                ride.isSyncedToHealthKit = true
+                // Save the change to SwiftData
+                try? modelContext.save()
+                
                 self.alertTitle = "Success"
                 self.alertMessage = "Your ride has been successfully synced to Apple Health."
             } else {
                 self.alertTitle = "Sync Failed"
-                self.alertMessage = "Could not sync ride to Apple Health. Please make sure you have granted permissions in the Health app.\n\(error?.localizedDescription ?? "")"
+                self.alertMessage = "Could not sync ride to Apple Health.\n\(error?.localizedDescription ?? "")"
             }
             self.showingAlert = true
         }

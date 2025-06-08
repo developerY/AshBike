@@ -9,35 +9,20 @@ import SwiftData
 
 @Model
 public class BikeRide: Identifiable {
-    //@Attribute(.unique) public var id: UUID = .init()
     @Attribute(.unique) public var id: UUID
-
     
-    /// When the ride started
     public var startTime: Date
-    
-    /// When the ride ended
     public var endTime: Date
-    
-    /// Total distance in meters
     public var totalDistance: Double
-    
-    /// Average speed over the ride in m/s
     public var avgSpeed: Double
-    
-    /// Maximum speed reached in m/s
     public var maxSpeed: Double
-    
-    /// Total elevation gain in meters
     public var elevationGain: Double
-    
-    /// Calories burned
     public var calories: Int
-    
-    /// Optional rider notes
     public var notes: String?
     
-    /// The sequence of recorded GPS points
+    // NEW: Property to track HealthKit sync status
+    public var isSyncedToHealthKit: Bool
+    
     var locations: [RideLocation]
     
     init(
@@ -49,6 +34,7 @@ public class BikeRide: Identifiable {
         elevationGain: Double = 0,
         calories: Int = 0,
         notes: String? = nil,
+        isSyncedToHealthKit: Bool = false, // Default to false
         locations: [RideLocation] = []
     ) {
         self.id = UUID()
@@ -60,17 +46,15 @@ public class BikeRide: Identifiable {
         self.elevationGain = elevationGain
         self.calories = calories
         self.notes = notes
+        self.isSyncedToHealthKit = isSyncedToHealthKit
         self.locations = locations
     }
     
-    /// Computed duration in seconds
     public var duration: TimeInterval {
         endTime.timeIntervalSince(startTime)
     }
 }
 
-
-// MARK: – somewhere in your file
 extension BikeRide: Hashable {
   public static func == (lhs: BikeRide, rhs: BikeRide) -> Bool {
     lhs.id == rhs.id

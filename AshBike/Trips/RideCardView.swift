@@ -80,37 +80,53 @@ struct RideCardView: View {
 
 /// A simple “card” view for display in the list
 struct RideCardViewSimple: View {
-  let ride: BikeRide
-  let onDelete: () -> Void
-  let onSync:   () -> Void
+    let ride: BikeRide
+    let onDelete: () -> Void
+    let onSync: () -> Void
   
-  var body: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      HStack {
-        Text("\(ride.startTime)") // , format: .dateTime.month().day().at().hour().minute())")
-          .font(.headline)
-        Spacer()
-        Text("(\(Int(ride.endTime.timeIntervalSince(ride.startTime)))s)")
-          .font(.subheadline).foregroundStyle(.secondary)
-      }
-      Text("Distance: \(ride.totalDistance / 1000, format: .number.precision(.fractionLength(1))) km")
-      Text("Avg: \(ride.avgSpeed * 3.6, format: .number.precision(.fractionLength(1))) km/h   Max: \(ride.maxSpeed * 3.6, format: .number.precision(.fractionLength(1))) km/h")
-      
-      HStack {
-        Spacer()
-        Button(action: onSync)   { Image(systemName: "arrow.triangle.2.circlepath") }
-        Button(action: onDelete) { Image(systemName: "trash")     }
-      }
-      .buttonStyle(.plain)
-      .font(.title3)
-      .foregroundStyle(.red)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(ride.startTime, format: .dateTime.month().day().hour().minute())
+                    .font(.headline)
+                Spacer()
+                Text("(\(Int(ride.endTime.timeIntervalSince(ride.startTime)))s)")
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
+            Text("Distance: \(ride.totalDistance / 1000, format: .number.precision(.fractionLength(1))) km")
+            Text("Avg: \(ride.avgSpeed * 3.6, format: .number.precision(.fractionLength(1))) km/h   Max: \(ride.maxSpeed * 3.6, format: .number.precision(.fractionLength(1))) km/h")
+            
+            HStack {
+                Spacer()
+                
+                // UPDATED: Conditionally show the sync button or a success icon
+                if ride.isSyncedToHealthKit {
+                    // You can replace this with your custom icon from image_348830.png
+                    // after adding it to your Assets.xcassets catalog.
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                } else {
+                    Button(action: onSync) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .foregroundStyle(.blue)
+                    }
+                    .buttonStyle(.plain)
+                }
+                
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .foregroundStyle(.red)
+                }
+                .buttonStyle(.plain)
+                .padding(.leading, 8)
+            }
+            .font(.title3)
+        }
+        .padding()
+        .background(RoundedRectangle(cornerRadius: 8).fill(.ultraThinMaterial))
+        .shadow(radius: 1)
     }
-    .padding()
-    .background(RoundedRectangle(cornerRadius: 8).fill(.ultraThinMaterial))
-    .shadow(radius: 1)
-  }
 }
-
 
 #Preview {
   // 1) Build a sample BikeRide
@@ -142,3 +158,4 @@ struct RideCardViewSimple: View {
   .padding()
   .previewLayout(.sizeThatFits)
 }
+
