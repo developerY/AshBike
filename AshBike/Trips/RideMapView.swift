@@ -26,9 +26,8 @@ struct RideMapView: View {
             }
         } else {
             Map(initialPosition: .region(region)) {
-                // Instead of drawing one large polyline, we now draw each
-                // segment of the route individually in a loop.
-                // This avoids rendering bugs and ensures the path is continuous.
+                // This loop draws the route as individual segments (1->2, 2->3, etc.)
+                // which bypasses the rendering bug and creates a single, continuous path.
                 if route.count > 1 {
                     ForEach(0..<route.count - 1, id: \.self) { i in
                         // Create a two-point array for each segment of the ride
@@ -54,7 +53,6 @@ struct RideMapView: View {
             )
         }
 
-        // Find the bounding box that contains the entire route.
         var minLat = first.latitude, maxLat = first.latitude
         var minLon = first.longitude, maxLon = first.longitude
 
@@ -65,14 +63,13 @@ struct RideMapView: View {
             maxLon = max(maxLon, point.longitude)
         }
 
-        // Create a region with a bit of padding.
         let center = CLLocationCoordinate2D(
             latitude: (minLat + maxLat) / 2.0,
             longitude: (minLon + maxLon) / 2.0
         )
         
         let span = MKCoordinateSpan(
-            latitudeDelta: (maxLat - minLat) * 1.4,
+            latitudeDelta: (maxLat - minLat) * 1.4, // 40% padding
             longitudeDelta: (maxLon - minLon) * 1.4
         )
 
@@ -81,8 +78,7 @@ struct RideMapView: View {
 }
 
 
-// The CLLocationCoordinate2D type needs to be Hashable to be used in a ForEach loop.
-// This extension adds that conformance.
+// This extension makes CLLocationCoordinate2D usable in a ForEach loop.
 extension CLLocationCoordinate2D: Hashable {
     public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
         lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
