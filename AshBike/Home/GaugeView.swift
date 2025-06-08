@@ -74,22 +74,18 @@ struct GaugeView: View {
                     .frame(width: radius * 0.1, height: radius * 0.1)
                 
                 // MARK: - Layer 6: Map Icon Button
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Button(action: onMapButtonTapped) {
-                            Image(systemName: "map.fill")
-                                .font(.title2)
-                                .padding()
-                                .background(.thinMaterial)
-                                .foregroundColor(.secondary)
-                                .clipShape(Circle())
-                                .shadow(radius: 3)
-                        }
-                        .padding(radius * 0.1) // Padding relative to gauge size
-                    }
+                // This button is now aligned to the bottom-trailing corner of the ZStack.
+                Button(action: onMapButtonTapped) {
+                    Image(systemName: "map.fill")
+                        .font(.title2)
+                        .padding()
+                        .background(.thinMaterial)
+                        .foregroundColor(.secondary)
+                        .clipShape(Circle())
+                        .shadow(radius: 3)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .padding()
             }
         }
         .aspectRatio(1, contentMode: .fit)
