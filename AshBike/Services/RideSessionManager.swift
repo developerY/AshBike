@@ -8,7 +8,7 @@ import Foundation
 import CoreLocation
 import Observation
 import SwiftData
-import SwiftUI  // for DateComponentsFormatter if you put formatting here
+import SwiftUI
 
 @Observable
 final class RideSessionManager: NSObject, CLLocationManagerDelegate {
@@ -19,7 +19,7 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     var currentSpeed: Double = 0
     var calories: Int = 0
     var routeCoordinates: [CLLocationCoordinate2D] = []
-    var heading: CLLocationDirection = 0 // The current compass heading
+    var heading: CLLocationDirection = 0
     
     var weight: Double = 72
     
@@ -37,39 +37,51 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     }
 
     func start() {
-        distance = 0; duration = 0; avgSpeed = 0; maxSpeed = 0; currentSpeed = 0; calories = 0
+        // Reset all metrics for a new ride
+        distance = 0
+        duration = 0
+        avgSpeed = 0
+        maxSpeed = 0
+        currentSpeed = 0
+        calories = 0
         routeCoordinates.removeAll()
         lastLocation = nil
+        
         startDate = Date()
         startTimer()
         locationManager.startUpdatingLocation()
-        locationManager.startUpdatingHeading() // Start tracking heading
+        locationManager.startUpdatingHeading()
     }
 
     func pause() {
         locationManager.stopUpdatingLocation()
-        locationManager.stopUpdatingHeading() // Stop tracking heading
+        locationManager.stopUpdatingHeading()
         timer?.invalidate()
     }
-
-    func stop() {
+    
+    // The existing stop function is renamed to a more descriptive 'reset'
+    func reset() {
         pause()
+        startDate = nil
     }
     
-    @MainActor
-    func stopAndPersistRide(using store: RideStore) async {
-        stop()
-        guard let ride = generateBikeRide() else { return }
-        do {
-            try await store.saveRide(ride)
-        } catch {
-            print("Save failed:", error)
+    // NEW: This function stops the ride and saves it to SwiftData
+    func stopAndSave(context: ModelContext) {
+        pause() // Stop timers and location updates
+        
+        guard let ride = generateBikeRide() else {
+            reset() // Reset even if we can't save
+            return
         }
+        
+        context.insert(ride)
+        try? context.save() // It's good practice to handle potential save errors
+        
+        reset() // Reset the session for the next ride
     }
 
-
-    func generateBikeRide() -> BikeRide? {
-        guard let start = startDate else { return nil }
+    private func generateBikeRide() -> BikeRide? {
+        guard let start = startDate, duration > 0 else { return nil }
 
         return BikeRide(
             startTime: start,
@@ -77,7 +89,7 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
             totalDistance: distance,
             avgSpeed: avgSpeed,
             maxSpeed: maxSpeed,
-            elevationGain: 0,
+            elevationGain: 0, // Placeholder
             calories: calories,
             notes: nil,
             locations: routeCoordinates.map {
@@ -101,13 +113,14 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self = self, let start = self.startDate else { return }
             self.duration = Date().timeIntervalSince(start)
-            self.avgSpeed = self.distance / max(self.duration, 1)
+            if self.duration > 0 {
+                self.avgSpeed = self.distance / self.duration
+            }
             let kcal = self.metForSpeed(self.currentSpeed) * self.weight * (self.duration / 3600)
             self.calories = Int(kcal)
         }
     }
     
-    // MARK: - CLLocationManagerDelegate
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let newLoc = locations.last else { return }
         currentSpeed = max(0, newLoc.speed)
@@ -120,7 +133,6 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-        // Update the heading, using trueHeading if available
         self.heading = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
     }
 }

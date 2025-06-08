@@ -7,9 +7,11 @@
 import SwiftUI
 import Observation
 import MapKit
+import SwiftData // Import SwiftData to use ModelContext
 
 struct HomeView: View {
     @State private var session = RideSessionManager()
+    @Environment(\.modelContext) private var modelContext // Get the model context from the environment
     
     // State for the accordion sections
     private enum ExpandedSection {
@@ -21,9 +23,7 @@ struct HomeView: View {
     @State private var isShowingMapSheet = false
 
     var body: some View {
-        // The main VStack ensures controls are separate from the scrollable content.
         VStack(spacing: 0) {
-            // The ScrollView allows content to expand without breaking the layout.
             ScrollView {
                 VStack(spacing: 16) {
                     // — Gauge —
@@ -81,7 +81,6 @@ struct HomeView: View {
             }
             
             // — Controls —
-            // These are now outside the ScrollView, pinning them to the bottom.
             HStack(spacing: 40) {
                 Button(action: { session.start() }) {
                     Image(systemName: "play.fill")
@@ -90,7 +89,10 @@ struct HomeView: View {
                 }
                 .buttonStyle(.borderedProminent)
 
-                Button(action: { session.stop() }) {
+                // The Stop button now calls the new save function
+                Button(action: {
+                    session.stopAndSave(context: modelContext)
+                }) {
                     Image(systemName: "stop.fill")
                         .font(.largeTitle)
                         .frame(width: 60, height: 60)
@@ -99,7 +101,7 @@ struct HomeView: View {
                 .disabled(session.duration == 0)
             }
             .padding()
-            .background(.bar) // Use a bar background for separation
+            .background(.bar)
         }
         .sheet(isPresented: $isShowingMapSheet) {
             VStack {
@@ -116,8 +118,6 @@ struct HomeView: View {
             }
             .presentationDetents([.medium, .large])
         }
-        // Use .ignoresSafeArea(edges: .bottom) if you want the controls to be truly at the bottom,
-        // but the current implementation respects the safe area for the TabView.
     }
 
     private func formattedDuration(_ sec: TimeInterval) -> String {
