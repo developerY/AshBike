@@ -34,9 +34,22 @@
 		5E67A2982DE1195D00D4557E /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5E1C54EC2DF522F30092DAFE /* Exceptions for "AshBike" folder in "AshBike" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 5E67A2602DE1003300D4557E /* AshBike */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		5E67A2632DE1003300D4557E /* AshBike */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5E1C54EC2DF522F30092DAFE /* Exceptions for "AshBike" folder in "AshBike" target */,
+			);
 			path = AshBike;
 			sourceTree = "<group>";
 		};
@@ -411,6 +424,12 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AshBike/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "Exception\tNSException *\t\"The string \\\"We need it\\\" is an invalid value for NSHealthUpdateUsageDescription\"\t0x0000600000c58210";
+				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "We need this to save the bike ride info";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need this to save the bike ride info";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We need this to save the bike ride info";
+				INFOPLIST_KEY_NSHomeKitUsageDescription = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Need for speed";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Need this for speed";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Need this for speed";
@@ -453,6 +472,12 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AshBike/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "Exception\tNSException *\t\"The string \\\"We need it\\\" is an invalid value for NSHealthUpdateUsageDescription\"\t0x0000600000c58210";
+				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "We need this to save the bike ride info";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need this to save the bike ride info";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We need this to save the bike ride info";
+				INFOPLIST_KEY_NSHomeKitUsageDescription = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Need for speed";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Need this for speed";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Need this for speed";
