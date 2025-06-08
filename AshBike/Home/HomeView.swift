@@ -17,15 +17,21 @@ struct HomeView: View {
     }
     @State private var expandedSection: ExpandedSection? = .metrics
     
-    // State to control the map's bottom sheet
+    // State to control the map's bottom sheet presentation
     @State private var isShowingMapSheet = false
 
     var body: some View {
         VStack(spacing: 16) {
             // — Gauge —
-            GaugeView(speed: session.currentSpeed * 3.6, heading: session.heading)
-                .frame(width: 300, height: 300)
-                .padding(.horizontal)
+            GaugeView(
+                speed: session.currentSpeed * 3.6,
+                heading: session.heading,
+                onMapButtonTapped: {
+                    isShowingMapSheet = true
+                }
+            )
+            .frame(width: 300, height: 300)
+            .padding(.horizontal)
 
             // — Live Metrics Section —
             CollapsibleSection(
@@ -47,25 +53,6 @@ struct HomeView: View {
                     }
                 }
                 .padding(.top, 8)
-            }
-            .padding(.horizontal)
-            
-            // — Map Button —
-            // This now presents a bottom sheet instead of expanding in-place.
-            Button(action: {
-                isShowingMapSheet = true
-            }) {
-                HStack {
-                    Text("Map")
-                        .font(.headline)
-                    Spacer()
-                    Image(systemName: "chevron.up.square")
-                        .font(.title2)
-                }
-                .padding()
-                .background(.ultraThinMaterial)
-                .cornerRadius(8)
-                .foregroundColor(.primary)
             }
             .padding(.horizontal)
 
@@ -110,12 +97,17 @@ struct HomeView: View {
         .sheet(isPresented: $isShowingMapSheet) {
             // This is the content for the bottom sheet
             VStack {
+                Capsule()
+                    .fill(Color.secondary)
+                    .frame(width: 40, height: 5)
+                    .padding(.top, 8)
+                
                 Text("Live Route")
                     .font(.headline)
                     .padding()
+                
                 RouteMapView(route: session.routeCoordinates)
             }
-            // Allow the sheet to be half-height or full-height
             .presentationDetents([.medium, .large])
         }
     }

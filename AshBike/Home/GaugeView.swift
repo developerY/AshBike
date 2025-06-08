@@ -10,6 +10,7 @@ struct GaugeView: View {
     var speed: Double
     var heading: Double
     var maxSpeed: Double = 60
+    var onMapButtonTapped: () -> Void // Action to show the map
 
     // Define the angle range for the gauge
     private let startAngle = Angle(degrees: 135)
@@ -30,25 +31,16 @@ struct GaugeView: View {
 
                 TicksAndLabels(center: center, radius: radius)
 
-                // MARK: - Layer 2: Progress Arc (Built in Solid Color Sections)
-                // This robust implementation uses separate, solid-colored arcs.
-                
-                // Green Section: 0-20 km/h (0.0 -> 0.33)
+                // MARK: - Layer 2: Progress Arc
                 GaugeArc()
                     .trim(from: 0.0, to: min(speedProgress, 0.333))
                     .stroke(Color.green, style: strokeStyle)
-
-                // Yellow Section: 20-40 km/h (0.33 -> 0.66)
                 GaugeArc()
                     .trim(from: 0.333, to: min(speedProgress, 0.666))
                     .stroke(Color.yellow, style: strokeStyle)
-                
-                // Orange Section: 40-50 km/h (0.66 -> 0.83)
                 GaugeArc()
                     .trim(from: 0.666, to: min(speedProgress, 0.833))
                     .stroke(Color.orange, style: strokeStyle)
-
-                // Red Section: 50-60 km/h (0.83 -> 1.0)
                 GaugeArc()
                     .trim(from: 0.833, to: speedProgress)
                     .stroke(Color.red, style: strokeStyle)
@@ -80,6 +72,24 @@ struct GaugeView: View {
                 Circle()
                     .fill(Color.white)
                     .frame(width: radius * 0.1, height: radius * 0.1)
+                
+                // MARK: - Layer 6: Map Icon Button
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button(action: onMapButtonTapped) {
+                            Image(systemName: "map.fill")
+                                .font(.title2)
+                                .padding()
+                                .background(.thinMaterial)
+                                .foregroundColor(.secondary)
+                                .clipShape(Circle())
+                                .shadow(radius: 3)
+                        }
+                        .padding(radius * 0.1) // Padding relative to gauge size
+                    }
+                }
             }
         }
         .aspectRatio(1, contentMode: .fit)
@@ -168,10 +178,10 @@ private struct TicksAndLabels: View {
 
 struct GaugeView_Previews: PreviewProvider {
     static var previews: some View {
-        GaugeView(speed: 45, heading: 0)
+        GaugeView(speed: 45, heading: 0, onMapButtonTapped: { print("Map tapped") })
             .frame(width: 300, height: 300)
             .padding()
-            .background(Color.white)
+            .background(Color.gray)
             .previewLayout(.sizeThatFits)
     }
 }
