@@ -84,11 +84,6 @@ struct RideListView: View {
     private func sync(ride: BikeRide) {
         healthKitService.save(bikeRide: ride) { success, error in
             if success {
-                // Set the property on the specific ride instance
-                ride.isSyncedToHealthKit = true
-                // Save the change to SwiftData
-                try? modelContext.save()
-                
                 self.alertTitle = "Success"
                 self.alertMessage = "Your ride has been successfully synced to Apple Health."
             } else {

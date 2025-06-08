@@ -20,9 +20,6 @@ public class BikeRide: Identifiable {
     public var calories: Int
     public var notes: String?
     
-    // NEW: Property to track HealthKit sync status
-    public var isSyncedToHealthKit: Bool
-    
     var locations: [RideLocation]
     
     init(
@@ -46,7 +43,6 @@ public class BikeRide: Identifiable {
         self.elevationGain = elevationGain
         self.calories = calories
         self.notes = notes
-        self.isSyncedToHealthKit = isSyncedToHealthKit
         self.locations = locations
     }
     

@@ -83,6 +83,10 @@ struct RideCardViewSimple: View {
     let ride: BikeRide
     let onDelete: () -> Void
     let onSync: () -> Void
+    
+    // State to hold the sync status from HealthKit
+    @State private var isSynced = false
+    private let healthKitService = HealthKitService()
   
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -99,10 +103,7 @@ struct RideCardViewSimple: View {
             HStack {
                 Spacer()
                 
-                // UPDATED: Conditionally show the sync button or a success icon
-                if ride.isSyncedToHealthKit {
-                    // You can replace this with your custom icon from image_348830.png
-                    // after adding it to your Assets.xcassets catalog.
+                if isSynced {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
                 } else {
@@ -125,8 +126,16 @@ struct RideCardViewSimple: View {
         .padding()
         .background(RoundedRectangle(cornerRadius: 8).fill(.ultraThinMaterial))
         .shadow(radius: 1)
+        .onAppear(perform: checkSyncStatus) // Check status when the card appears
+    }
+    
+    private func checkSyncStatus() {
+        healthKitService.checkIfRideIsSynced(ride: ride) { synced in
+            self.isSynced = synced
+        }
     }
 }
+
 
 #Preview {
   // 1) Build a sample BikeRide
@@ -158,4 +167,3 @@ struct RideCardViewSimple: View {
   .padding()
   .previewLayout(.sizeThatFits)
 }
-
