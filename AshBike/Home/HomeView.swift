@@ -11,11 +11,14 @@ import MapKit
 struct HomeView: View {
     @State private var session = RideSessionManager()
     
-    // State to manage which section is expanded. Only one can be open at a time.
+    // State for the accordion sections
     private enum ExpandedSection {
-        case metrics, map, ebike
+        case metrics, ebike
     }
     @State private var expandedSection: ExpandedSection? = .metrics
+    
+    // State to control the map's bottom sheet
+    @State private var isShowingMapSheet = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -34,50 +37,37 @@ struct HomeView: View {
             ) {
                 VStack {
                     HStack(spacing: 12) {
-                        MetricCard(
-                          label: "Distance",
-                          value: String(format: "%.1f km", session.distance / 1000)
-                        )
-                        MetricCard(
-                          label: "Duration",
-                          value: formattedDuration(session.duration)
-                        )
-                        MetricCard(
-                          label: "Avg Speed",
-                          value: String(format: "%.1f km/h", session.avgSpeed * 3.6)
-                        )
+                        MetricCard(label: "Distance", value: String(format: "%.1f km", session.distance / 1000))
+                        MetricCard(label: "Duration", value: formattedDuration(session.duration))
+                        MetricCard(label: "Avg Speed", value: String(format: "%.1f km/h", session.avgSpeed * 3.6))
                     }
                     HStack(spacing: 12) {
-                        MetricCard(
-                          label: "Heart Rate",
-                          value: "-- bpm"
-                        )
-                        MetricCard(
-                          label: "Calories",
-                          value: "\(session.calories) kcal"
-                        )
+                        MetricCard(label: "Heart Rate", value: "-- bpm")
+                        MetricCard(label: "Calories", value: "\(session.calories) kcal")
                     }
                 }
                 .padding(.top, 8)
             }
             .padding(.horizontal)
             
-
-            // — Map section —
-            CollapsibleSection(
-                title: "Map",
-                isExpanded: Binding(
-                    get: { expandedSection == .map },
-                    set: { isExpanding in expandedSection = isExpanding ? .map : nil }
-                )
-            ) {
-              RouteMapView(route: session.routeCoordinates)
-                .frame(height: 200)
+            // — Map Button —
+            // This now presents a bottom sheet instead of expanding in-place.
+            Button(action: {
+                isShowingMapSheet = true
+            }) {
+                HStack {
+                    Text("Map")
+                        .font(.headline)
+                    Spacer()
+                    Image(systemName: "chevron.up.square")
+                        .font(.title2)
+                }
+                .padding()
+                .background(.ultraThinMaterial)
                 .cornerRadius(8)
-                .padding(.top, 8)
+                .foregroundColor(.primary)
             }
             .padding(.horizontal)
-
 
             // — E-bike Stats —
             CollapsibleSection(
@@ -100,18 +90,14 @@ struct HomeView: View {
 
             // — Controls —
             HStack(spacing: 40) {
-                Button {
-                    session.start()
-                } label: {
+                Button(action: { session.start() }) {
                     Image(systemName: "play.fill")
                         .font(.largeTitle)
                         .frame(width: 60, height: 60)
                 }
                 .buttonStyle(.borderedProminent)
 
-                Button {
-                    session.stop()
-                } label: {
+                Button(action: { session.stop() }) {
                     Image(systemName: "stop.fill")
                         .font(.largeTitle)
                         .frame(width: 60, height: 60)
@@ -121,6 +107,17 @@ struct HomeView: View {
             }
         }
         .padding(.vertical)
+        .sheet(isPresented: $isShowingMapSheet) {
+            // This is the content for the bottom sheet
+            VStack {
+                Text("Live Route")
+                    .font(.headline)
+                    .padding()
+                RouteMapView(route: session.routeCoordinates)
+            }
+            // Allow the sheet to be half-height or full-height
+            .presentationDetents([.medium, .large])
+        }
     }
 
     private func formattedDuration(_ sec: TimeInterval) -> String {
