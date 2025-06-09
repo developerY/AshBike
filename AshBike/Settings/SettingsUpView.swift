@@ -10,27 +10,9 @@ import SwiftData
 
 // MARK: — Profile model
 
-@Model
-final class UserProfile {
-  @Attribute(.unique) var id: UUID // = .init()
-  var name: String
-  var heightCm: Double
-  var weightKg: Double
-
-  init(name: String = "Ash Monster",
-       heightCm: Double = 171,
-       weightKg: Double = 72)
-  {
-      self.id = UUID()
-    self.name = name
-    self.heightCm = heightCm
-    self.weightKg = weightKg
-  }
-}
-
 // MARK: — SettingsView
 
-struct SettingsView: View {
+struct SettingsUpView: View {
   @Environment(\.modelContext) private var context
   @Query private var profiles: [UserProfile]
 
@@ -132,7 +114,7 @@ struct SettingsView: View {
 
 // MARK: — ProfileEditorView
 
-struct ProfileEditorView: View {
+struct ProfileEditorUpView: View {
   @Environment(\.dismiss) private var dismiss
   @Bindable var profile: UserProfile
 
