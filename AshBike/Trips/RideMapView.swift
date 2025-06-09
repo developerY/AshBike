@@ -7,58 +7,91 @@
 import SwiftUI
 import MapKit
 
-// This view is now refactored to use the reliable UIViewRepresentable pattern,
-// matching the technology of the working "Live Route" map in your app.
-struct RideMapView: UIViewRepresentable {
+struct RideMapView: View {
     let route: [CLLocationCoordinate2D]
 
-    func makeUIView(context: Context) -> MKMapView {
-        let mapView = MKMapView()
-        mapView.delegate = context.coordinator
-        // We are viewing a past ride, so we don't need to show the user's live location.
-        mapView.showsUserLocation = false
-        mapView.userTrackingMode = .none
-        return mapView
+    // The map's region is calculated once and stored in state.
+    @State private var region: MKCoordinateRegion
+
+    init(route: [CLLocationCoordinate2D]) {
+        self.route = route
+        self._region = State(initialValue: RideMapView.region(for: route))
     }
 
-    func updateUIView(_ uiView: MKMapView, context: Context) {
-        // Always clear any old overlays before drawing the new one.
-        uiView.removeOverlays(uiView.overlays)
+    var body: some View {
+        // If the route is empty, show a helpful message.
+        if route.isEmpty {
+            ContentUnavailableView {
+                Label("No Route Data", systemImage: "map.circle")
+            } description: {
+                Text("This ride does not have any GPS location data to display.")
+            }
+        } else {
+            // Use the calculated region to set the map's initial position.
+            Map(initialPosition: .region(region)) {
+                // This loop draws the route as individual segments (1->2, 2->3, etc.)
+                // which bypasses rendering bugs and creates a single, continuous path.
+                if route.count > 1 {
+                    ForEach(0..<route.count - 1, id: \.self) { i in
+                        // Create a two-point array for each segment of the ride
+                        let segment = [route[i], route[i+1]]
+                        MapPolyline(coordinates: segment)
+                            .stroke(.blue, lineWidth: 4)
+                    }
+                }
+            }
+        }
+    }
+
+    /// Calculates a map region that fits all the given coordinates.
+    static func region(for route: [CLLocationCoordinate2D]) -> MKCoordinateRegion {
+        guard let first = route.first else {
+            return MKCoordinateRegion()
+        }
         
-        if route.count > 1 {
-            let polyline = MKPolyline(coordinates: route, count: route.count)
-            uiView.addOverlay(polyline)
-            
-            // This is the proper way to zoom the map to fit the entire route.
-            // It calculates the bounding box of the line and adds some padding.
-            uiView.setVisibleMapRect(
-                polyline.boundingMapRect,
-                edgePadding: UIEdgeInsets(top: 50, left: 50, bottom: 50, right: 50),
-                animated: true
+        if route.count == 1 {
+            return MKCoordinateRegion(
+                center: first,
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
             )
         }
-    }
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
+        // Find the bounding box that contains the entire route.
+        var minLat = first.latitude, maxLat = first.latitude
+        var minLon = first.longitude, maxLon = first.longitude
 
-    // The Coordinator handles rendering the blue line for our polyline.
-    class Coordinator: NSObject, MKMapViewDelegate {
-        var parent: RideMapView
-
-        init(_ parent: RideMapView) {
-            self.parent = parent
+        for point in route {
+            minLat = min(minLat, point.latitude)
+            maxLat = max(maxLat, point.latitude)
+            minLon = min(minLon, point.longitude)
+            maxLon = max(maxLon, point.longitude)
         }
 
-        func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
-            if let polyline = overlay as? MKPolyline {
-                let renderer = MKPolylineRenderer(polyline: polyline)
-                renderer.strokeColor = .systemBlue
-                renderer.lineWidth = 4
-                return renderer
-            }
-            return MKOverlayRenderer(overlay: overlay)
-        }
+        // Create a region with a bit of padding.
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2.0,
+            longitude: (minLon + maxLon) / 2.0
+        )
+        
+        let span = MKCoordinateSpan(
+            latitudeDelta: (maxLat - minLat) * 1.4,
+            longitudeDelta: (maxLon - minLon) * 1.4
+        )
+
+        return MKCoordinateRegion(center: center, span: span)
+    }
+}
+
+
+// The CLLocationCoordinate2D type needs to be Hashable to be used in a ForEach loop.
+// This extension adds that conformance.
+extension CLLocationCoordinate2D: Hashable {
+    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
+        lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(latitude)
+        hasher.combine(longitude)
     }
 }
