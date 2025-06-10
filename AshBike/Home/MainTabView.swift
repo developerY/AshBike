@@ -31,7 +31,7 @@ struct MainTabView: View {
                 // .tag(Tab.ride)
 
             // Settings tab remains the same.
-            SettingsView()
+            SettingsAshBikeView()
                 .tabItem {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
