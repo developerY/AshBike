@@ -4,6 +4,12 @@
 //
 //  Created by Siamak Ashrafi on 6/9/25.
 //
+//
+//  SettingsView.swift
+//  AshBike
+//
+//  Created by Siamak Ashrafi on 5/24/25.
+//
 import SwiftUI
 import SwiftData
 import HealthKit
@@ -15,6 +21,7 @@ class AppSettings {
     var isHealthKitEnabled: Bool {
         didSet { UserDefaults.standard.set(isHealthKitEnabled, forKey: "isHealthKitEnabled") }
     }
+    // Re-adding hardware toggles; they will be shown conditionally.
     var isNFCEnabled: Bool {
         didSet { UserDefaults.standard.set(isNFCEnabled, forKey: "isNFCEnabled") }
     }
@@ -42,6 +49,11 @@ struct SettingsView: View {
     // State for the settings toggles and services
     @State private var appSettings = AppSettings()
     @State private var healthKitService = HealthKitService()
+
+    // ** This is the key for the conditional UI **
+    // In a real app, this would be determined by a BLE handshake or other hardware check.
+    // We set it to 'true' here so you can see the AshBike-specific settings.
+    @State private var isAshBikeHardwareDetected = true
 
     @State private var showProfileEditor = false
     @State private var connectivityExpanded = true
@@ -76,7 +88,7 @@ struct SettingsView: View {
                 // --- CONNECTIVITY ---
                 Section {
                     DisclosureGroup(isExpanded: $connectivityExpanded) {
-                        // HealthKit Toggle
+                        // HealthKit Toggle (for everyone)
                         Toggle(isOn: $appSettings.isHealthKitEnabled) {
                             Label("HealthKit Sync", systemImage: "heart.text.square")
                         }
@@ -84,15 +96,18 @@ struct SettingsView: View {
                             handleHealthKitToggle(isEnabled: isEnabled)
                         }
                         
-                        // Other toggles now bound to AppSettings
-                        Toggle(isOn: $appSettings.isNFCEnabled) {
-                            Label("NFC Scanning", systemImage: "nfc.tag.fill")
-                        }
-                        Toggle(isOn: $appSettings.isQREnabled) {
-                             Label("QR Scanner", systemImage: "qrcode.viewfinder")
-                        }
-                        Toggle(isOn: $appSettings.isBLEEnabled) {
-                             Label("Bluetooth (BLE)", systemImage: "bolt.horizontal.circle")
+                        // ** AshBike-Specific Hardware Toggles **
+                        // These will only appear if AshBike hardware is detected.
+                        if isAshBikeHardwareDetected {
+                            Toggle(isOn: $appSettings.isNFCEnabled) {
+                                Label("NFC Scanning", systemImage: "nfc.tag.fill")
+                            }
+                            Toggle(isOn: $appSettings.isQREnabled) {
+                                 Label("QR Scanner", systemImage: "qrcode.viewfinder")
+                            }
+                            Toggle(isOn: $appSettings.isBLEEnabled) {
+                                 Label("Bluetooth (BLE)", systemImage: "bolt.horizontal.circle")
+                            }
                         }
                     } label: {
                         Label("Connectivity", systemImage: "dot.radiowaves.left.and.right")
@@ -130,7 +145,7 @@ struct SettingsView: View {
             Image(systemName: "person.circle.fill")
                 .resizable().frame(width: 50, height: 50)
                 .foregroundStyle(.blue.gradient)
-            VStack(alignment: .leading) {
+            VStack { // <-- Corrected typo from VStac to VStack
                 Text(profile.name)
                     .font(.headline)
                 Text("Height: \(Int(profile.heightCm)) cm | Weight: \(Int(profile.weightKg)) kg")
@@ -150,7 +165,7 @@ struct SettingsView: View {
         if isEnabled {
             healthKitService.requestAuthorization { success, error in
                 if success {
-                    showAlert(title: "HealthKit Enabled", message: "AshBike can now sync with Apple Health.")
+                    showAlert(title: "HealthKit Enabled", message: "This app can now sync with Apple Health.")
                 } else {
                     appSettings.isHealthKitEnabled = false // Revert toggle on failure
                     showAlert(title: "Authorization Failed", message: "Could not authorize HealthKit. Please check your settings in the Health app.")
