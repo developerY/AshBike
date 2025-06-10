@@ -8,7 +8,6 @@ import SwiftUI
 import SwiftData
 import HealthKit
 
-
 // MARK: - App Settings State Manager
 @Observable
 class AppSettings {
@@ -16,21 +15,17 @@ class AppSettings {
     var isHealthKitEnabled: Bool {
         didSet { UserDefaults.standard.set(isHealthKitEnabled, forKey: "isHealthKitEnabled") }
     }
-    var isNFCEnabled: Bool {
-        didSet { UserDefaults.standard.set(isNFCEnabled, forKey: "isNFCEnabled") }
-    }
-    var isQREnabled: Bool {
-        didSet { UserDefaults.standard.set(isQREnabled, forKey: "isQREnabled") }
-    }
-    var isBLEEnabled: Bool {
-        didSet { UserDefaults.standard.set(isBLEEnabled, forKey: "isBLEEnabled") }
-    }
+    // These properties are for the beta hardware features.
+    // They are set to 'false' by default.
+    var isNFCEnabled: Bool = false
+    var isQREnabled: Bool = false
+    var isBLEEnabled: Bool = false
+
 
     init() {
         self.isHealthKitEnabled = UserDefaults.standard.bool(forKey: "isHealthKitEnabled")
-        self.isNFCEnabled = UserDefaults.standard.bool(forKey: "isNFCEnabled")
-        self.isQREnabled = UserDefaults.standard.bool(forKey: "isQREnabled")
-        self.isBLEEnabled = UserDefaults.standard.bool(forKey: "isBLEEnabled")
+        // We won't load the hardware settings from UserDefaults yet,
+        // as they are in beta.
     }
 }
 
@@ -51,7 +46,7 @@ struct SettingsView: View {
 
     @State private var showProfileEditor = false
     @State private var connectivityExpanded = true
-    @State private var ashbikeExpanded = true // Controls the new section
+    @State private var ashbikeExpanded = false // Controls the new section
     
     // Alert properties
     @State private var showingAlert = false
@@ -101,18 +96,20 @@ struct SettingsView: View {
                         DisclosureGroup(isExpanded: $ashbikeExpanded) {
                             // This Group allows us to disable all the toggles at once.
                             Group {
-                                Toggle(isOn: $appSettings.isNFCEnabled) {
+                                // ** THIS IS THE CHANGE **
+                                // The bindings are now to constant 'false' values,
+                                // which forces the toggles to the 'off' position.
+                                Toggle(isOn: .constant(false)) {
                                     Label("NFC Scanning", systemImage: "nfc.tag.fill")
                                 }
-                                Toggle(isOn: $appSettings.isQREnabled) {
+                                Toggle(isOn: .constant(false)) {
                                      Label("QR Scanner", systemImage: "qrcode.viewfinder")
                                 }
-                                Toggle(isOn: $appSettings.isBLEEnabled) {
+                                Toggle(isOn: .constant(false)) {
                                      Label("Bluetooth (BLE)", systemImage: "bolt.horizontal.circle")
                                 }
                             }
-                            // The .disabled modifier is now inside the DisclosureGroup,
-                            // applying only to the toggles.
+                            // The .disabled modifier grays out the toggles.
                             .disabled(true)
                         } label: {
                             Label("AshBike Hardware", systemImage: "bicycle.circle")
@@ -234,5 +231,3 @@ struct ProfileEditorView: View {
     return SettingsView()
         .modelContainer(container)
 }
-
-
