@@ -177,7 +177,7 @@ private struct TicksAndLabels: View {
     }
 }
 
-struct GaugeView_Previews: PreviewProvider {
+/*struct GaugeView_Previews: PreviewProvider {
     static var previews: some View {
         GaugeView(speed: 45, heading: 0, onMapButtonTapped: { print("Map tapped") })
             .frame(width: 300, height: 300)
@@ -185,4 +185,10 @@ struct GaugeView_Previews: PreviewProvider {
             .background(Color.gray)
             .previewLayout(.sizeThatFits)
     }
+}*/
+
+import Playgrounds
+
+#Playground {
+    print("hi")
 }
