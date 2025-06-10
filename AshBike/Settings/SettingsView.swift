@@ -8,6 +8,7 @@ import SwiftUI
 import SwiftData
 import HealthKit
 
+
 // MARK: - App Settings State Manager
 @Observable
 class AppSettings {
@@ -113,6 +114,9 @@ struct SettingsView: View {
                     } header: {
                         Text("E-Bike Features") // Section header
                     }
+                    // ** THIS IS THE CHANGE **
+                    // The .disabled modifier grays out the entire section.
+                    .disabled(true)
                 }
                 
                 // --- DATA MANAGEMENT ---
@@ -227,3 +231,4 @@ struct ProfileEditorView: View {
     return SettingsView()
         .modelContainer(container)
 }
+
