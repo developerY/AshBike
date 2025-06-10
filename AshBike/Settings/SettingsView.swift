@@ -8,7 +8,6 @@ import SwiftUI
 import SwiftData
 import HealthKit
 
-
 // MARK: - App Settings State Manager
 @Observable
 class AppSettings {
@@ -16,7 +15,6 @@ class AppSettings {
     var isHealthKitEnabled: Bool {
         didSet { UserDefaults.standard.set(isHealthKitEnabled, forKey: "isHealthKitEnabled") }
     }
-    // Re-adding hardware toggles; they will be shown conditionally.
     var isNFCEnabled: Bool {
         didSet { UserDefaults.standard.set(isNFCEnabled, forKey: "isNFCEnabled") }
     }
@@ -52,6 +50,7 @@ struct SettingsView: View {
 
     @State private var showProfileEditor = false
     @State private var connectivityExpanded = true
+    @State private var ashbikeExpanded = true // Controls the new section
     
     // Alert properties
     @State private var showingAlert = false
@@ -80,7 +79,7 @@ struct SettingsView: View {
                     }
                 }
 
-                // --- CONNECTIVITY ---
+                // --- GENERAL CONNECTIVITY (For all users) ---
                 Section {
                     DisclosureGroup(isExpanded: $connectivityExpanded) {
                         // HealthKit Toggle (for everyone)
@@ -90,10 +89,15 @@ struct SettingsView: View {
                         .onChange(of: appSettings.isHealthKitEnabled) { _, isEnabled in
                             handleHealthKitToggle(isEnabled: isEnabled)
                         }
-                        
-                        // ** AshBike-Specific Hardware Toggles **
-                        // These will only appear if AshBike hardware is detected.
-                        if isAshBikeHardwareDetected {
+                    } label: {
+                        Label("App Connectivity", systemImage: "dot.radiowaves.left.and.right")
+                    }
+                }
+                
+                // --- ASHBIKE HARDWARE SECTION (Conditional) ---
+                if isAshBikeHardwareDetected {
+                    Section {
+                        DisclosureGroup(isExpanded: $ashbikeExpanded) {
                             Toggle(isOn: $appSettings.isNFCEnabled) {
                                 Label("NFC Scanning", systemImage: "nfc.tag.fill")
                             }
@@ -103,9 +107,11 @@ struct SettingsView: View {
                             Toggle(isOn: $appSettings.isBLEEnabled) {
                                  Label("Bluetooth (BLE)", systemImage: "bolt.horizontal.circle")
                             }
+                        } label: {
+                            Label("AshBike Hardware", systemImage: "bicycle.circle")
                         }
-                    } label: {
-                        Label("Connectivity", systemImage: "dot.radiowaves.left.and.right")
+                    } header: {
+                        Text("E-Bike Features") // Section header
                     }
                 }
                 
@@ -120,7 +126,6 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .sheet(isPresented: $showProfileEditor) {
-                // Ensure we pass a non-optional profile to the editor
                 if let profile = profiles.first {
                     ProfileEditorView(profile: profile)
                 }
@@ -140,7 +145,7 @@ struct SettingsView: View {
             Image(systemName: "person.circle.fill")
                 .resizable().frame(width: 50, height: 50)
                 .foregroundStyle(.blue.gradient)
-            VStack { // <-- Corrected typo from VStac to VStack
+            VStack(alignment: .leading) {
                 Text(profile.name)
                     .font(.headline)
                 Text("Height: \(Int(profile.heightCm)) cm | Weight: \(Int(profile.weightKg)) kg")
@@ -215,7 +220,6 @@ struct ProfileEditorView: View {
 
 // MARK: — Preview
 #Preview {
-    // Create an in-memory container and add a sample profile for the preview
     let config = ModelConfiguration(schema: Schema([UserProfile.self, BikeRide.self]), isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: Schema([UserProfile.self]), configurations: [config])
     container.mainContext.insert(UserProfile())
