@@ -1,10 +1,4 @@
 //
-//  Settings.swift
-//  AshBike
-//
-//  Created by Siamak Ashrafi on 6/9/25.
-//
-//
 //  SettingsView.swift
 //  AshBike
 //
@@ -13,6 +7,7 @@
 import SwiftUI
 import SwiftData
 import HealthKit
+
 
 // MARK: - App Settings State Manager
 @Observable
