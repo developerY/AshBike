@@ -99,24 +99,27 @@ struct SettingsView: View {
                 if isAshBikeHardwareDetected {
                     Section {
                         DisclosureGroup(isExpanded: $ashbikeExpanded) {
-                            Toggle(isOn: $appSettings.isNFCEnabled) {
-                                Label("NFC Scanning", systemImage: "nfc.tag.fill")
+                            // This Group allows us to disable all the toggles at once.
+                            Group {
+                                Toggle(isOn: $appSettings.isNFCEnabled) {
+                                    Label("NFC Scanning", systemImage: "nfc.tag.fill")
+                                }
+                                Toggle(isOn: $appSettings.isQREnabled) {
+                                     Label("QR Scanner", systemImage: "qrcode.viewfinder")
+                                }
+                                Toggle(isOn: $appSettings.isBLEEnabled) {
+                                     Label("Bluetooth (BLE)", systemImage: "bolt.horizontal.circle")
+                                }
                             }
-                            Toggle(isOn: $appSettings.isQREnabled) {
-                                 Label("QR Scanner", systemImage: "qrcode.viewfinder")
-                            }
-                            Toggle(isOn: $appSettings.isBLEEnabled) {
-                                 Label("Bluetooth (BLE)", systemImage: "bolt.horizontal.circle")
-                            }
+                            // The .disabled modifier is now inside the DisclosureGroup,
+                            // applying only to the toggles.
+                            .disabled(true)
                         } label: {
                             Label("AshBike Hardware", systemImage: "bicycle.circle")
                         }
                     } header: {
                         Text("E-Bike Features") // Section header
                     }
-                    // ** THIS IS THE CHANGE **
-                    // The .disabled modifier grays out the entire section.
-                    .disabled(true)
                 }
                 
                 // --- DATA MANAGEMENT ---
@@ -231,4 +234,5 @@ struct ProfileEditorView: View {
     return SettingsView()
         .modelContainer(container)
 }
+
 
