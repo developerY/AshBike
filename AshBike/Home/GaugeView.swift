@@ -79,17 +79,24 @@ private struct LiquidGlassArcView: View {
                 startAngle: .degrees(135), // Corresponds to the start of the arc
                 endAngle: .degrees(405)  // Corresponds to the end of the arc (135 + 270)
             )
-
-            GaugeArcShape()
+            
+            // This is the colored layer that is revealed as speed increases.
+            let coloredPortion = GaugeArcShape()
                 .stroke(gradient, style: strokeStyle)
                 .mask(
                     GaugeArcShape()
                         .trim(from: 0, to: progress)
                         .stroke(style: strokeStyle)
                 )
-                .blur(radius: 15) // Soft, diffused glow
-                .shadow(color: .white.opacity(0.4), radius: CGFloat(progress * 15)) // A neutral white glow to avoid color clashes
-                .blendMode(.plusLighter) // Makes the light "add" to the glass below
+
+            // We apply more intense, colored shadows to the revealed portion
+            // to create a much stronger glow effect.
+            coloredPortion
+                .blur(radius: 15)
+                .shadow(color: .green.opacity(progress > 0 ? 0.8 : 0), radius: CGFloat(10 + progress * 15))
+                .shadow(color: .yellow.opacity(progress > 0.4 ? 0.8 : 0), radius: CGFloat(10 + progress * 15))
+                .shadow(color: .red.opacity(progress > 0.7 ? 0.8 : 0), radius: CGFloat(10 + progress * 15))
+                .blendMode(.plusLighter)
         }
     }
 }
