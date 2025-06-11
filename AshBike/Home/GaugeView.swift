@@ -30,13 +30,13 @@ struct GaugeView: View {
                 LiquidGlassArcView(radius: radius, speed: speed, maxSpeed: maxSpeed)
                 
                 // Layer 3: Ticks and Labels
-                TicksAndLabelsView(center: center, radius: radius, maxSpeed: maxSpeed, currentSpeed: speed)
+                TicksAndLabelsView(center: center, radius: radius, maxSpeed: maxSpeed)
 
-                // Layer 4: Center Text Display
-                CenterTextView(radius: radius, speed: speed, heading: heading)
-
-                // Layer 5: Needle
+                // Layer 4: Needle
                 NeedleView(radius: radius, speed: speed, maxSpeed: maxSpeed)
+
+                // Layer 5: Center Text Display (now on top of the needle)
+                CenterTextView(radius: radius, speed: speed, heading: heading)
                 
                 // Layer 6: Map Icon Button
                 MapButton(action: onMapButtonTapped)
@@ -119,7 +119,6 @@ private struct TicksAndLabelsView: View {
     let center: CGPoint
     let radius: CGFloat
     let maxSpeed: Double
-    let currentSpeed: Double
     private let tickCount = 7
 
     var body: some View {
@@ -128,48 +127,21 @@ private struct TicksAndLabelsView: View {
                 let value = Double(i) * (maxSpeed / Double(tickCount - 1))
                 let angle = angleForValue(value)
                 
-                // Tick Marks as 3D Glass Capsules
-                let isTickActive = currentSpeed >= value
-                
-                ZStack {
-                    // Base capsule
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                        .background(.blue.opacity(0.3))
-                        .clipShape(Capsule())
-
-                    // Color fill that matches the main gradient
-                    let gradient = AngularGradient(
-                        gradient: Gradient(colors: [.green, .yellow, .orange, .red]),
-                        center: .center,
-                        startAngle: .degrees(135),
-                        endAngle: .degrees(405)
-                    )
-                    
-                    if isTickActive {
-                        Capsule()
-                            .fill(gradient)
-                            .opacity(0.8)
-                            .blendMode(.screen)
-                    }
-
-                    // Highlight
-                    Capsule()
-                        .stroke(LinearGradient(colors: [.white.opacity(0.5), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1)
-                }
-                .frame(width: 4, height: 12)
-                .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
-                .position(x: center.x + (radius * 0.95) * cos(CGFloat(angle.radians)),
-                          y: center.y + (radius * 0.95) * sin(CGFloat(angle.radians)))
-                .rotationEffect(angle + .degrees(90))
+                // Tick Marks - reverted to simple style
+                Rectangle()
+                    .fill(Color.white.opacity(0.7))
+                    .frame(width: 2, height: 10)
+                    .position(x: center.x + (radius * 0.9) * cos(CGFloat(angle.radians)),
+                              y: center.y + (radius * 0.9) * sin(CGFloat(angle.radians)))
+                    .rotationEffect(angle + .degrees(90))
 
 
-                // Tick Labels
+                // Tick Labels - position adjusted to be inside the arc
                 Text(String(format: "%.0f", value))
-                    .font(.system(size: radius * 0.09, weight: .medium))
+                    .font(.system(size: radius * 0.1, weight: .bold))
                     .foregroundStyle(.white.opacity(0.8))
-                    .position(x: center.x + (radius * 0.8) * cos(CGFloat(angle.radians)),
-                              y: center.y + (radius * 0.8) * sin(CGFloat(angle.radians)))
+                    .position(x: center.x + (radius * 0.78) * cos(CGFloat(angle.radians)),
+                              y: center.y + (radius * 0.78) * sin(CGFloat(angle.radians)))
             }
         }
     }
@@ -188,9 +160,9 @@ private struct CenterTextView: View {
         VStack(spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(String(format: "%.0f", speed))
-                    .font(.system(size: radius * 0.5, weight: .bold))
+                    .font(.system(size: radius * 0.6, weight: .bold)) // Increased size
                 Text("km/h")
-                    .font(.system(size: radius * 0.15, weight: .semibold))
+                    .font(.system(size: radius * 0.18, weight: .semibold))
             }
             Text(headingString(from: heading))
                 .font(.system(size: radius * 0.18, weight: .medium))
@@ -200,7 +172,6 @@ private struct CenterTextView: View {
         }
         .foregroundStyle(.white)
         .shadow(color: .black.opacity(0.5), radius: 3, y: 2)
-        .offset(y: radius * 0.1)
     }
     
     private func headingString(from direction: Double) -> String {
@@ -219,13 +190,12 @@ private struct NeedleView: View {
 
     var body: some View {
         ZStack {
-            // New "Frosted Glass" Pointer
+            // Frosted Glass Pointer
             PointerShape()
-                .frame(width: radius * 0.1, height: radius * 0.9) // Made slightly shorter
+                .frame(width: radius * 0.08, height: radius * 0.9)
                 .offset(y: -radius * 0.45)
                 .foregroundStyle(.ultraThinMaterial)
                 .overlay(
-                    // The color overlay is now removed.
                     PointerShape()
                         .stroke(LinearGradient(colors: [.white.opacity(0.6), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1.5)
                 )
