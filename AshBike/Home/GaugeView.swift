@@ -57,22 +57,27 @@ private struct LiquidGlassArcView: View {
 
     var body: some View {
         ZStack {
-            // 1. Base Frosted Glass Track
+            // 1. Base Frosted Glass Track with a more pronounced 3D effect
             GaugeArcShape()
                 .stroke(style: strokeStyle)
                 .foregroundStyle(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.2), radius: 5, x: 5, y: 5) // Outer shadow for depth
+                .shadow(color: .black.opacity(0.3), radius: 8, x: 5, y: 5)
+                .overlay {
+                    // Inner shadow for a "pressed-in" look
+                    GaugeArcShape()
+                        .stroke(Color.black.opacity(0.5), lineWidth: 1)
+                        .blur(radius: 2)
+                        .offset(x: 1, y: 1)
+                        .mask(GaugeArcShape().stroke(style: strokeStyle))
+                    // Top-down highlight for a glossy finish
+                    GaugeArcShape()
+                        .stroke(LinearGradient(colors: [.white.opacity(0.4), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 2)
+                        .blur(radius: 1)
+                        .mask(GaugeArcShape().stroke(style: strokeStyle))
+                }
 
-            // 2. Inner Bevel Highlight
-            GaugeArcShape()
-                .stroke(
-                    LinearGradient(colors: [.white.opacity(0.5), .clear], startPoint: .topLeading, endPoint: .bottomTrailing),
-                    style: StrokeStyle(lineWidth: radius * 0.2, lineCap: .round)
-                )
-                .mask(GaugeArcShape().stroke(style: strokeStyle))
-                .blur(radius: 1)
 
-            // 3. Define the gradient
+            // 2. Define the illumination gradient
             let gradient = AngularGradient(
                 gradient: Gradient(colors: [.green, .yellow, .orange, .red]),
                 center: .center,
@@ -80,19 +85,26 @@ private struct LiquidGlassArcView: View {
                 endAngle: .degrees(405)
             )
             
-            // 4. Create the masked colored portion of the arc
+            // 3. Create the masked colored portion of the arc
             let coloredPortion = GaugeArcShape()
                 .trim(from: 0, to: progress)
                 .stroke(gradient, style: strokeStyle)
 
-            // 5. Draw the soft glow layer underneath
+            // 4. Draw the soft glow layer underneath
             coloredPortion
                 .blur(radius: 20)
-                .opacity(0.7)
-                .blendMode(.plusLighter)
+                .opacity(0.8)
+                .blendMode(.screen) // Screen blend mode gives a brighter, more colorful glow
 
-            // 6. Draw the crisp, vibrant color layer on top
+            // 5. Draw the crisp color layer on top
             coloredPortion
+                .overlay {
+                    // Add a glossy highlight to the colored part itself
+                    GaugeArcShape()
+                        .stroke(LinearGradient(colors: [.white.opacity(0.5), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1)
+                        .blur(radius: 1)
+                        .mask(coloredPortion)
+                }
         }
     }
 }
