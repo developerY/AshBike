@@ -72,31 +72,27 @@ private struct LiquidGlassArcView: View {
                 .mask(GaugeArcShape().stroke(style: strokeStyle))
                 .blur(radius: 1)
 
-            // 3. Internal Illumination that "lights up" the glass
+            // 3. Define the gradient
             let gradient = AngularGradient(
                 gradient: Gradient(colors: [.green, .yellow, .orange, .red]),
                 center: .center,
-                startAngle: .degrees(135), // Corresponds to the start of the arc
-                endAngle: .degrees(405)  // Corresponds to the end of the arc (135 + 270)
+                startAngle: .degrees(135),
+                endAngle: .degrees(405)
             )
             
-            // This is the colored layer that is revealed as speed increases.
+            // 4. Create the masked colored portion of the arc
             let coloredPortion = GaugeArcShape()
+                .trim(from: 0, to: progress)
                 .stroke(gradient, style: strokeStyle)
-                .mask(
-                    GaugeArcShape()
-                        .trim(from: 0, to: progress)
-                        .stroke(style: strokeStyle)
-                )
 
-            // We apply more intense, colored shadows to the revealed portion
-            // to create a much stronger glow effect.
+            // 5. Draw the soft glow layer underneath
             coloredPortion
-                .blur(radius: 15)
-                .shadow(color: .green.opacity(progress > 0 ? 0.8 : 0), radius: CGFloat(10 + progress * 15))
-                .shadow(color: .yellow.opacity(progress > 0.4 ? 0.8 : 0), radius: CGFloat(10 + progress * 15))
-                .shadow(color: .red.opacity(progress > 0.7 ? 0.8 : 0), radius: CGFloat(10 + progress * 15))
+                .blur(radius: 20)
+                .opacity(0.7)
                 .blendMode(.plusLighter)
+
+            // 6. Draw the crisp, vibrant color layer on top
+            coloredPortion
         }
     }
 }
