@@ -230,6 +230,7 @@ private struct NeedleView: View {
             // New "Frosted Glass" Pointer
             PointerShape()
                 .frame(width: radius * 0.1, height: radius)
+                .offset(y: -radius / 2) // ** FIX 1: Offset the pointer so the base is at the center
                 .foregroundStyle(.ultraThinMaterial)
                 .overlay(
                     PointerShape()
@@ -237,12 +238,10 @@ private struct NeedleView: View {
                         .blendMode(.plusLighter)
                 )
                 .overlay(
-                    // ** THIS IS THE FIX **
-                    // We use .stroke() instead of .strokeBorder() for custom shapes.
                     PointerShape()
                         .stroke(LinearGradient(colors: [.white.opacity(0.6), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1.5)
                 )
-                .rotationEffect(angle - .degrees(180)) // Offset rotation to point correctly
+                .rotationEffect(angle - .degrees(90)) // ** FIX 2: Correct the rotation angle
                 .shadow(color: .black.opacity(0.3), radius: 5, y: 5)
             
             // Pivot point
