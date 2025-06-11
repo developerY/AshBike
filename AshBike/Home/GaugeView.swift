@@ -216,23 +216,64 @@ private struct NeedleView: View {
     let maxSpeed: Double
     
     private var angle: Angle { .degrees(135) + .degrees(270 * (speed / maxSpeed)) }
-    
-    var body: some View {
-        // Needle
-        Capsule()
-            .trim(from: 0.5, to: 1)
-            .stroke(.white, lineWidth: 3)
-            .frame(width: radius * 1.8, height: radius * 1.8)
-            .rotationEffect(angle)
-            .shadow(color: .black.opacity(0.4), radius: 4, y: 4)
+    private var speedGradient: AngularGradient {
+        AngularGradient(
+            gradient: Gradient(colors: [.green, .yellow, .orange, .red]),
+            center: .center,
+            startAngle: .degrees(135),
+            endAngle: .degrees(405)
+        )
+    }
 
-        // Pivot point
-        Circle()
-            .fill(.white)
-            .frame(width: radius * 0.15, height: radius * 0.15)
-            .shadow(radius: 2)
+    var body: some View {
+        ZStack {
+            // New "Frosted Glass" Pointer
+            PointerShape()
+                .frame(width: radius * 0.1, height: radius)
+                .foregroundStyle(.ultraThinMaterial)
+                .overlay(
+                    PointerShape()
+                        .foregroundStyle(speedGradient)
+                        .blendMode(.plusLighter)
+                )
+                .overlay(
+                    // ** THIS IS THE FIX **
+                    // We use .stroke() instead of .strokeBorder() for custom shapes.
+                    PointerShape()
+                        .stroke(LinearGradient(colors: [.white.opacity(0.6), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1.5)
+                )
+                .rotationEffect(angle - .degrees(180)) // Offset rotation to point correctly
+                .shadow(color: .black.opacity(0.3), radius: 5, y: 5)
+            
+            // Pivot point
+            Circle()
+                .fill(.background)
+                .frame(width: radius * 0.2, height: radius * 0.2)
+                .shadow(radius: 3)
+                .overlay(
+                    Circle().stroke(Color.black.opacity(0.2), lineWidth: 1)
+                )
+        }
     }
 }
+
+// Custom shape for the new pointer
+private struct PointerShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+            path.addQuadCurve(
+                to: CGPoint(x: rect.midX, y: rect.maxY),
+                control: CGPoint(x: rect.midX + rect.width * 0.5, y: rect.height * 0.5)
+            )
+            path.addQuadCurve(
+                to: CGPoint(x: rect.midX, y: rect.minY),
+                control: CGPoint(x: rect.midX - rect.width * 0.5, y: rect.height * 0.5)
+            )
+        }
+    }
+}
+
 
 private struct MapButton: View {
     let action: () -> Void
@@ -287,4 +328,3 @@ struct GaugeView_Previews: PreviewProvider {
             .previewLayout(.sizeThatFits)
     }
 }
-
