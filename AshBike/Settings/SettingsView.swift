@@ -39,13 +39,11 @@ struct SettingsView: View {
     @State private var appSettings = AppSettings()
     @State private var healthKitService = HealthKitService()
 
-    // ** This is the key for the conditional UI **
-    // In a real app, this would be determined by a BLE handshake or other hardware check.
-    // We set it to 'true' here so you can see the AshBike-specific settings.
+    // This determines if AshBike-specific hardware has been detected.
     @State private var isAshBikeHardwareDetected = true
 
-    // State to control the expanded/collapsed sections
-    @State private var profileExpanded = false
+    // State to control UI modes
+    @State private var isEditingProfile = false
     @State private var connectivityExpanded = true
     @State private var ashbikeExpanded = true
     
@@ -57,21 +55,19 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // --- PROFILE SECTION (NOW INLINE & EXPANDABLE) ---
+                // --- PROFILE SECTION (NOW A TRUE INLINE EDITOR) ---
                 Section {
                     if let profile = profiles.first {
-                        // The entire profile section is now a DisclosureGroup
-                        DisclosureGroup(isExpanded: $profileExpanded) {
-                            // The editing fields are now directly inside the group
-                            ProfileEditorView(profile: profile)
-                        } label: {
-                            // The label shows the user's current data
+                        // We toggle between the display card and the editor fields
+                        // based on the `isEditingProfile` state.
+                        if isEditingProfile {
+                            ProfileEditorView(profile: profile, isEditing: $isEditingProfile)
+                        } else {
                             profileCard(for: profile)
                         }
                     } else {
-                        Button("Create Profile") {
-                            context.insert(UserProfile())
-                        }
+                        // This will briefly appear before .onAppear runs
+                        Text("Creating Profile...")
                     }
                 }
 
@@ -86,7 +82,6 @@ struct SettingsView: View {
                 // --- GENERAL CONNECTIVITY (For all users) ---
                 Section {
                     DisclosureGroup(isExpanded: $connectivityExpanded) {
-                        // HealthKit Toggle (for everyone)
                         Toggle(isOn: $appSettings.isHealthKitEnabled) {
                             Label("HealthKit Sync", systemImage: "heart.text.square")
                         }
@@ -98,14 +93,11 @@ struct SettingsView: View {
                     }
                 }
                 
-                // --- ASHBIKE HARDWARE SECTION (Conditional) ---
+                // --- ASHBIKE HARDWARE SECTION (Conditional & Disabled for Beta) ---
                 if isAshBikeHardwareDetected {
                     Section {
                         DisclosureGroup(isExpanded: $ashbikeExpanded) {
-                            // This Group allows us to disable all the toggles at once.
                             Group {
-                                // The bindings are now to constant 'false' values,
-                                // which forces the toggles to the 'off' position.
                                 Toggle(isOn: .constant(false)) {
                                     Label("NFC Scanning", systemImage: "nfc.tag.fill")
                                 }
@@ -116,20 +108,18 @@ struct SettingsView: View {
                                      Label("Bluetooth (BLE)", systemImage: "bolt.horizontal.circle")
                                 }
                             }
-                            // The .disabled modifier grays out the toggles.
                             .disabled(true)
                         } label: {
                             Label("AshBike Hardware", systemImage: "bicycle.circle")
                         }
                     } header: {
-                        Text("E-Bike Features") // Section header
+                        Text("E-Bike Features")
                     }
                 }
                 
                 // --- DATA MANAGEMENT ---
                 Section("Data") {
                     Button("Delete All Rides", role: .destructive) {
-                        // Add confirmation alert before deleting
                         try? context.delete(model: BikeRide.self)
                         showAlert(title: "Success", message: "All ride data has been deleted.")
                     }
@@ -140,6 +130,16 @@ struct SettingsView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(alertMessage)
+            }
+            // ** THIS IS THE CHANGE **
+            // When the view appears, it checks if a profile exists.
+            // If not, it creates and saves one.
+            .onAppear {
+                if profiles.isEmpty {
+                    let defaultProfile = UserProfile()
+                    context.insert(defaultProfile)
+                    try? context.save()
+                }
             }
         }
     }
@@ -158,6 +158,14 @@ struct SettingsView: View {
                     .font(.subheadline).foregroundStyle(.secondary)
             }
             Spacer()
+            // The edit button now toggles the `isEditingProfile` state.
+            Button {
+                isEditingProfile = true
+            } label: {
+                Image(systemName: "pencil")
+                    .font(.title2)
+            }
+            .buttonStyle(.borderless)
         }
         .padding(.vertical, 4)
     }
@@ -183,26 +191,39 @@ struct SettingsView: View {
     }
 }
 
-// MARK: — ProfileEditorView (Simplified for inline use)
+// MARK: — ProfileEditorView (Updated to include a Save button)
 struct ProfileEditorView: View {
     @Bindable var profile: UserProfile
+    @Binding var isEditing: Bool
+    
+    @Environment(\.modelContext) private var context
 
     var body: some View {
-        // These are the fields that appear when the profile section is expanded.
-        TextField("Name", text: $profile.name)
-        HStack {
-            Text("Height (cm)")
-            Spacer()
-            TextField("cm", value: $profile.heightCm, format: .number)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-        }
-        HStack {
-            Text("Weight (kg)")
-            Spacer()
-            TextField("kg", value: $profile.weightKg, format: .number)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
+        VStack {
+            TextField("Name", text: $profile.name)
+                .textFieldStyle(.roundedBorder)
+            
+            HStack {
+                TextField("Height (cm)", value: $profile.heightCm, format: .number)
+                    .keyboardType(.decimalPad)
+                TextField("Weight (kg)", value: $profile.weightKg, format: .number)
+                    .keyboardType(.decimalPad)
+            }
+            .textFieldStyle(.roundedBorder)
+            
+            HStack {
+                Button("Cancel", role: .cancel) {
+                    // Optional: Add logic to revert changes if needed
+                    isEditing = false
+                }
+                Spacer()
+                Button("Save") {
+                    try? context.save()
+                    isEditing = false
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .padding(.top)
         }
     }
 }
@@ -211,7 +232,8 @@ struct ProfileEditorView: View {
 #Preview {
     let config = ModelConfiguration(schema: Schema([UserProfile.self, BikeRide.self]), isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: Schema([UserProfile.self]), configurations: [config])
-    container.mainContext.insert(UserProfile())
+    // We no longer need to insert a profile for the preview,
+    // as the view's .onAppear will handle it.
     
     return SettingsView()
         .modelContainer(container)
