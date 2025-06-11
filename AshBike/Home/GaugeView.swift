@@ -216,33 +216,21 @@ private struct NeedleView: View {
     let maxSpeed: Double
     
     private var angle: Angle { .degrees(135) + .degrees(270 * (speed / maxSpeed)) }
-    private var speedGradient: AngularGradient {
-        AngularGradient(
-            gradient: Gradient(colors: [.green, .yellow, .orange, .red]),
-            center: .center,
-            startAngle: .degrees(135),
-            endAngle: .degrees(405)
-        )
-    }
 
     var body: some View {
         ZStack {
             // New "Frosted Glass" Pointer
             PointerShape()
-                .frame(width: radius * 0.1, height: radius)
-                .offset(y: -radius / 2)
+                .frame(width: radius * 0.1, height: radius * 0.9) // Made slightly shorter
+                .offset(y: -radius * 0.45)
                 .foregroundStyle(.ultraThinMaterial)
                 .overlay(
-                    PointerShape()
-                        .foregroundStyle(speedGradient)
-                        .blendMode(.plusLighter)
-                )
-                .overlay(
+                    // The color overlay is now removed.
                     PointerShape()
                         .stroke(LinearGradient(colors: [.white.opacity(0.6), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1.5)
                 )
-                .rotationEffect(angle - .degrees(90))
-                .shadow(color: .black.opacity(0.3), radius: 5, y: 5)
+                .rotationEffect(angle) // Corrected rotation
+                .shadow(color: .black.opacity(0.4), radius: 5, y: 5)
             
             // Pivot point
             Circle()
@@ -256,8 +244,7 @@ private struct NeedleView: View {
     }
 }
 
-// ** THIS IS THE CHANGE **
-// Custom shape for the new pointer, now a classic triangle.
+// Custom shape for the new pointer
 private struct PointerShape: Shape {
     func path(in rect: CGRect) -> Path {
         Path { path in
@@ -316,7 +303,7 @@ private struct GaugeArcShape: Shape {
 
 struct GaugeView_Previews: PreviewProvider {
     static var previews: some View {
-        GaugeView(speed: 45, heading: 270, onMapButtonTapped: { print("Map tapped") })
+        GaugeView(speed: 25, heading: 270, onMapButtonTapped: { print("Map tapped") })
             .frame(width: 300, height: 300)
             .padding()
             .background(Color.gray.opacity(0.2)) // A neutral background for the preview
