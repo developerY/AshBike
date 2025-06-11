@@ -18,20 +18,24 @@ struct GaugeView: View {
             let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
 
             ZStack {
-                // Layer 1: 3D Glass Background & Ticks
-                GaugeBackgroundView(radius: radius)
+                // Layer 1: Dark background to make the glass effect pop
+                Circle()
+                    .fill(Color(red: 0.1, green: 0.1, blue: 0.15))
+                    .shadow(color: .black.opacity(0.5), radius: 10, x: 5, y: 5)
+
+                // Layer 2: The new "Liquid Glass" Speedometer Arc
+                LiquidGlassArcView(radius: radius, speed: speed, maxSpeed: maxSpeed)
+                
+                // Layer 3: Ticks and Labels, now more subtle
                 TicksAndLabelsView(center: center, radius: radius, maxSpeed: maxSpeed)
 
-                // Layer 2: Glowing Progress Arc
-                GlowingArcView(radius: radius, speed: speed, maxSpeed: maxSpeed)
-                
-                // Layer 3: Center Text Display
+                // Layer 4: Center Text Display
                 CenterTextView(radius: radius, speed: speed, heading: heading)
 
-                // Layer 4: Needle
+                // Layer 5: Needle, redesigned to float above the glass
                 NeedleView(radius: radius, speed: speed, maxSpeed: maxSpeed)
                 
-                // Layer 5: Map Icon Button
+                // Layer 6: Map Icon Button
                 MapButton(action: onMapButtonTapped)
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
@@ -43,39 +47,49 @@ struct GaugeView: View {
 
 // MARK: - Sub-components for GaugeView
 
-private struct GaugeBackgroundView: View {
+private struct LiquidGlassArcView: View {
     let radius: CGFloat
+    let speed: Double
+    let maxSpeed: Double
     
+    private var progress: Double { min(speed / maxSpeed, 1.0) }
+    private var strokeStyle: StrokeStyle { StrokeStyle(lineWidth: radius * 0.2, lineCap: .round) }
+
     var body: some View {
-        // Base of the gauge
-        Circle()
-            .fill(
-                RadialGradient(
-                    gradient: Gradient(colors: [Color.gray.opacity(0.3), Color.black.opacity(0.6)]),
-                    center: .center,
-                    startRadius: radius * 0.8,
-                    endRadius: radius
+        ZStack {
+            // 1. Base Frosted Glass Track
+            GaugeArcShape()
+                .stroke(style: strokeStyle)
+                .foregroundStyle(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.2), radius: 5, x: 5, y: 5) // Outer shadow for depth
+
+            // 2. Inner Bevel Highlight
+            GaugeArcShape()
+                .stroke(
+                    LinearGradient(colors: [.white.opacity(0.5), .clear], startPoint: .topLeading, endPoint: .bottomTrailing),
+                    style: StrokeStyle(lineWidth: radius * 0.2, lineCap: .round)
                 )
-            )
-        // Inner shadow for depth
-        Circle()
-            .stroke(Color.black.opacity(0.5), lineWidth: 2)
-            .blur(radius: 2)
-            .offset(x: 1, y: 1)
-            .mask(Circle().stroke(lineWidth: 4))
-            
-        // Glassy highlight
-        Circle()
-            .fill(
-                LinearGradient(
-                    gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.0)]),
-                    startPoint: .top,
-                    endPoint: .bottom
+                .mask(GaugeArcShape().stroke(style: strokeStyle))
+                .blur(radius: 1)
+
+            // 3. Internal Illumination that "lights up" the glass
+            GaugeArcShape()
+                .trim(from: 0, to: progress)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.cyan.opacity(0.8), Color.blue.opacity(0.8)]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    style: strokeStyle
                 )
-            )
-            .frame(width: radius * 2, height: radius * 2)
+                .blur(radius: 10) // Soft, diffused glow
+                .shadow(color: .cyan.opacity(0.7), radius: CGFloat(progress * 20)) // The main light bleed effect
+                .blendMode(.plusLighter) // Makes the light "add" to the glass below
+        }
     }
 }
+
 
 private struct TicksAndLabelsView: View {
     let center: CGPoint
@@ -91,57 +105,24 @@ private struct TicksAndLabelsView: View {
                 
                 // Tick Marks
                 Rectangle()
-                    .fill(Color.white.opacity(0.8))
-                    .frame(width: 2, height: 10)
-                    .position(x: center.x + (radius * 0.9) * cos(CGFloat(angle.radians)),
-                              y: center.y + (radius * 0.9) * sin(CGFloat(angle.radians)))
+                    .fill(Color.white.opacity(0.5))
+                    .frame(width: 1, height: 8)
+                    .position(x: center.x + (radius * 0.95) * cos(CGFloat(angle.radians)),
+                              y: center.y + (radius * 0.95) * sin(CGFloat(angle.radians)))
                     .rotationEffect(angle + .degrees(90))
 
                 // Tick Labels
                 Text(String(format: "%.0f", value))
-                    .font(.system(size: radius * 0.1, weight: .bold))
-                    .foregroundStyle(.white)
-                    .position(x: center.x + (radius * 0.75) * cos(CGFloat(angle.radians)),
-                              y: center.y + (radius * 0.75) * sin(CGFloat(angle.radians)))
+                    .font(.system(size: radius * 0.09, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .position(x: center.x + (radius * 0.8) * cos(CGFloat(angle.radians)),
+                              y: center.y + (radius * 0.8) * sin(CGFloat(angle.radians)))
             }
         }
     }
     
     private func angleForValue(_ value: Double) -> Angle {
         .degrees(135) + .degrees(270 * (value / maxSpeed))
-    }
-}
-
-private struct GlowingArcView: View {
-    let radius: CGFloat
-    let speed: Double
-    let maxSpeed: Double
-    
-    private var progress: Double { min(speed / maxSpeed, 1.0) }
-    private var strokeStyle: StrokeStyle { StrokeStyle(lineWidth: radius * 0.15, lineCap: .round) }
-    
-    private var gradient: AngularGradient {
-        AngularGradient(
-            gradient: Gradient(colors: [.green, .yellow, .red]),
-            center: .center,
-            startAngle: .degrees(135),
-            endAngle: .degrees(135 + 270)
-        )
-    }
-
-    var body: some View {
-        // Background track for the glow
-        GaugeArcShape()
-            .stroke(Color.black.opacity(0.5), style: strokeStyle)
-            .blur(radius: 2)
-        
-        // The glowing progress bar
-        GaugeArcShape()
-            .trim(from: 0.0, to: progress)
-            .stroke(gradient, style: strokeStyle)
-            .shadow(color: .green.opacity(0.5), radius: CGFloat(progress * 15)) // Glow effect
-            .shadow(color: .yellow.opacity(progress > 0.5 ? 0.7 : 0), radius: CGFloat(progress * 15))
-            .shadow(color: .red.opacity(progress > 0.8 ? 0.9 : 0), radius: CGFloat(progress * 15))
     }
 }
 
@@ -160,12 +141,12 @@ private struct CenterTextView: View {
             }
             Text(headingString(from: heading))
                 .font(.system(size: radius * 0.18, weight: .medium))
-                .padding(8)
-                .background(Color.blue.opacity(0.7))
-                .cornerRadius(8)
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(.black.opacity(0.3))
+                .cornerRadius(12)
         }
         .foregroundStyle(.white)
-        .shadow(radius: 2)
+        .shadow(color: .black.opacity(0.5), radius: 3, y: 2)
         .offset(y: radius * 0.1)
     }
     
@@ -187,24 +168,16 @@ private struct NeedleView: View {
         // Needle
         Capsule()
             .trim(from: 0.5, to: 1)
-            .stroke(
-                LinearGradient(gradient: Gradient(colors: [.red, .red.opacity(0.5)]), startPoint: .top, endPoint: .bottom),
-                lineWidth: 4
-            )
-            .frame(width: radius * 1.6, height: radius * 1.6)
+            .stroke(.white, lineWidth: 3)
+            .frame(width: radius * 1.8, height: radius * 1.8)
             .rotationEffect(angle)
-            .shadow(color: .red, radius: 5)
-        
+            .shadow(color: .black.opacity(0.4), radius: 4, y: 4)
+
         // Pivot point
         Circle()
-            .fill(
-                RadialGradient(
-                    gradient: Gradient(colors: [.white, .gray]),
-                    center: .center, startRadius: 0, endRadius: radius * 0.05
-                )
-            )
-            .frame(width: radius * 0.1, height: radius * 0.1)
-            .shadow(radius: 1)
+            .fill(.white)
+            .frame(width: radius * 0.15, height: radius * 0.15)
+            .shadow(radius: 2)
     }
 }
 
@@ -220,7 +193,7 @@ private struct MapButton: View {
                     Image(systemName: "map.fill")
                         .font(.title2)
                         .padding()
-                        .background(.thinMaterial)
+                        .background(.ultraThinMaterial)
                         .foregroundStyle(.primary)
                         .clipShape(Circle())
                         .shadow(radius: 3)
@@ -257,7 +230,7 @@ struct GaugeView_Previews: PreviewProvider {
         GaugeView(speed: 45, heading: 270, onMapButtonTapped: { print("Map tapped") })
             .frame(width: 300, height: 300)
             .padding()
-            .background(Color(red: 0.1, green: 0.1, blue: 0.2))
+            .background(Color(red: 0.1, green: 0.1, blue: 0.15))
             .previewLayout(.sizeThatFits)
     }
 }
