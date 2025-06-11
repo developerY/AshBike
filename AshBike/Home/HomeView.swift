@@ -118,6 +118,10 @@ struct HomeView: View {
                 RouteMapView(route: session.routeCoordinates)
             }
             .presentationDetents([.medium, .large])
+            // ** THIS IS THE FIX **
+            // This modifier makes the sheet's background transparent,
+            // preventing the view behind it from dimming.
+            .presentationBackground(.clear)
         }
     }
 
