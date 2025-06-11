@@ -18,16 +18,19 @@ struct GaugeView: View {
             let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
 
             ZStack {
-                // Layer 1: The new "Glass" Background
+                // Layer 1: The new "Blue Frosted Glass" Background
                 Circle()
-                    .foregroundStyle(.ultraThinMaterial)
+                    .foregroundStyle(.thinMaterial)
+                    .background(.blue.opacity(0.3))
+                    .clipShape(Circle())
                     .shadow(color: .black.opacity(0.3), radius: 10)
+
 
                 // Layer 2: The "Liquid Glass" Speedometer Arc
                 LiquidGlassArcView(radius: radius, speed: speed, maxSpeed: maxSpeed)
                 
                 // Layer 3: Ticks and Labels
-                TicksAndLabelsView(center: center, radius: radius, maxSpeed: maxSpeed)
+                TicksAndLabelsView(center: center, radius: radius, maxSpeed: maxSpeed, currentSpeed: speed)
 
                 // Layer 4: Center Text Display
                 CenterTextView(radius: radius, speed: speed, heading: heading)
@@ -116,6 +119,7 @@ private struct TicksAndLabelsView: View {
     let center: CGPoint
     let radius: CGFloat
     let maxSpeed: Double
+    let currentSpeed: Double
     private let tickCount = 7
 
     var body: some View {
@@ -124,18 +128,46 @@ private struct TicksAndLabelsView: View {
                 let value = Double(i) * (maxSpeed / Double(tickCount - 1))
                 let angle = angleForValue(value)
                 
-                // Tick Marks
-                Rectangle()
-                    .fill(Color.white.opacity(0.5))
-                    .frame(width: 1, height: 8)
-                    .position(x: center.x + (radius * 0.95) * cos(CGFloat(angle.radians)),
-                              y: center.y + (radius * 0.95) * sin(CGFloat(angle.radians)))
-                    .rotationEffect(angle + .degrees(90))
+                // Tick Marks as 3D Glass Capsules
+                let isTickActive = currentSpeed >= value
+                
+                ZStack {
+                    // Base capsule
+                    Capsule()
+                        .fill(.ultraThinMaterial)
+                        .background(.blue.opacity(0.3))
+                        .clipShape(Capsule())
+
+                    // Color fill that matches the main gradient
+                    let gradient = AngularGradient(
+                        gradient: Gradient(colors: [.green, .yellow, .orange, .red]),
+                        center: .center,
+                        startAngle: .degrees(135),
+                        endAngle: .degrees(405)
+                    )
+                    
+                    if isTickActive {
+                        Capsule()
+                            .fill(gradient)
+                            .opacity(0.8)
+                            .blendMode(.screen)
+                    }
+
+                    // Highlight
+                    Capsule()
+                        .stroke(LinearGradient(colors: [.white.opacity(0.5), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1)
+                }
+                .frame(width: 4, height: 12)
+                .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
+                .position(x: center.x + (radius * 0.95) * cos(CGFloat(angle.radians)),
+                          y: center.y + (radius * 0.95) * sin(CGFloat(angle.radians)))
+                .rotationEffect(angle + .degrees(90))
+
 
                 // Tick Labels
                 Text(String(format: "%.0f", value))
                     .font(.system(size: radius * 0.09, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.white.opacity(0.8))
                     .position(x: center.x + (radius * 0.8) * cos(CGFloat(angle.radians)),
                               y: center.y + (radius * 0.8) * sin(CGFloat(angle.radians)))
             }
@@ -255,3 +287,4 @@ struct GaugeView_Previews: PreviewProvider {
             .previewLayout(.sizeThatFits)
     }
 }
+
