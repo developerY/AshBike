@@ -44,9 +44,10 @@ struct SettingsView: View {
     // We set it to 'true' here so you can see the AshBike-specific settings.
     @State private var isAshBikeHardwareDetected = true
 
-    @State private var showProfileEditor = false
+    // State to control the expanded/collapsed sections
+    @State private var profileExpanded = false
     @State private var connectivityExpanded = true
-    @State private var ashbikeExpanded = false // Controls the new section
+    @State private var ashbikeExpanded = true
     
     // Alert properties
     @State private var showingAlert = false
@@ -56,10 +57,17 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // --- PROFILE SECTION ---
+                // --- PROFILE SECTION (NOW INLINE & EXPANDABLE) ---
                 Section {
                     if let profile = profiles.first {
-                        profileCard(for: profile)
+                        // The entire profile section is now a DisclosureGroup
+                        DisclosureGroup(isExpanded: $profileExpanded) {
+                            // The editing fields are now directly inside the group
+                            ProfileEditorView(profile: profile)
+                        } label: {
+                            // The label shows the user's current data
+                            profileCard(for: profile)
+                        }
                     } else {
                         Button("Create Profile") {
                             context.insert(UserProfile())
@@ -96,7 +104,6 @@ struct SettingsView: View {
                         DisclosureGroup(isExpanded: $ashbikeExpanded) {
                             // This Group allows us to disable all the toggles at once.
                             Group {
-                                // ** THIS IS THE CHANGE **
                                 // The bindings are now to constant 'false' values,
                                 // which forces the toggles to the 'off' position.
                                 Toggle(isOn: .constant(false)) {
@@ -129,11 +136,6 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
-            .sheet(isPresented: $showProfileEditor) {
-                if let profile = profiles.first {
-                    ProfileEditorView(profile: profile)
-                }
-            }
             .alert(alertTitle, isPresented: $showingAlert) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -156,10 +158,6 @@ struct SettingsView: View {
                     .font(.subheadline).foregroundStyle(.secondary)
             }
             Spacer()
-            Button { showProfileEditor = true } label: {
-                Image(systemName: "pencil")
-            }
-            .buttonStyle(.borderless)
         }
         .padding(.vertical, 4)
     }
@@ -185,39 +183,26 @@ struct SettingsView: View {
     }
 }
 
-// MARK: — ProfileEditorView (Unchanged)
+// MARK: — ProfileEditorView (Simplified for inline use)
 struct ProfileEditorView: View {
-    @Environment(\.dismiss) private var dismiss
     @Bindable var profile: UserProfile
 
     var body: some View {
-        NavigationStack {
-            Form {
-                TextField("Name", text: $profile.name)
-                HStack {
-                    Text("Height (cm)")
-                    Spacer()
-                    TextField("cm", value: $profile.heightCm, format: .number)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                }
-                HStack {
-                    Text("Weight (kg)")
-                    Spacer()
-                    TextField("kg", value: $profile.weightKg, format: .number)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                }
-            }
-            .navigationTitle("Edit Profile")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { dismiss() }
-                }
-            }
+        // These are the fields that appear when the profile section is expanded.
+        TextField("Name", text: $profile.name)
+        HStack {
+            Text("Height (cm)")
+            Spacer()
+            TextField("cm", value: $profile.heightCm, format: .number)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+        }
+        HStack {
+            Text("Weight (kg)")
+            Spacer()
+            TextField("kg", value: $profile.weightKg, format: .number)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
         }
     }
 }
