@@ -18,21 +18,21 @@ struct GaugeView: View {
             let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
 
             ZStack {
-                // Layer 1: Dark background to make the glass effect pop
+                // Layer 1: The new "Glass" Background
                 Circle()
-                    .fill(Color(red: 0.1, green: 0.1, blue: 0.15))
-                    .shadow(color: .black.opacity(0.5), radius: 10, x: 5, y: 5)
+                    .foregroundStyle(.ultraThinMaterial)
+                    .shadow(color: .black.opacity(0.3), radius: 10)
 
-                // Layer 2: The new "Liquid Glass" Speedometer Arc
+                // Layer 2: The "Liquid Glass" Speedometer Arc
                 LiquidGlassArcView(radius: radius, speed: speed, maxSpeed: maxSpeed)
                 
-                // Layer 3: Ticks and Labels, now more subtle
+                // Layer 3: Ticks and Labels
                 TicksAndLabelsView(center: center, radius: radius, maxSpeed: maxSpeed)
 
                 // Layer 4: Center Text Display
                 CenterTextView(radius: radius, speed: speed, heading: heading)
 
-                // Layer 5: Needle, redesigned to float above the glass
+                // Layer 5: Needle
                 NeedleView(radius: radius, speed: speed, maxSpeed: maxSpeed)
                 
                 // Layer 6: Map Icon Button
@@ -234,7 +234,7 @@ struct GaugeView_Previews: PreviewProvider {
         GaugeView(speed: 45, heading: 270, onMapButtonTapped: { print("Map tapped") })
             .frame(width: 300, height: 300)
             .padding()
-            .background(Color(red: 0.1, green: 0.1, blue: 0.15))
+            .background(Color.gray.opacity(0.2)) // A neutral background for the preview
             .previewLayout(.sizeThatFits)
     }
 }
