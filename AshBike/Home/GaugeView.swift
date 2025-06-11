@@ -199,10 +199,10 @@ private struct NeedleView: View {
                     PointerShape()
                         .stroke(LinearGradient(colors: [.white.opacity(0.6), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1.5)
                 )
-                .rotationEffect(angle) // Corrected rotation
+                .rotationEffect(angle + .degrees(90)) // Corrected rotation
                 .shadow(color: .black.opacity(0.4), radius: 5, y: 5)
             
-            // Pivot point
+            // Pivot point - now drawn as part of the needle
             Circle()
                 .fill(.background)
                 .frame(width: radius * 0.2, height: radius * 0.2)
@@ -280,3 +280,4 @@ struct GaugeView_Previews: PreviewProvider {
             .previewLayout(.sizeThatFits)
     }
 }
+
