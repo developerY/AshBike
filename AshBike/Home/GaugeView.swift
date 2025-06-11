@@ -230,7 +230,7 @@ private struct NeedleView: View {
             // New "Frosted Glass" Pointer
             PointerShape()
                 .frame(width: radius * 0.1, height: radius)
-                .offset(y: -radius / 2) // ** FIX 1: Offset the pointer so the base is at the center
+                .offset(y: -radius / 2)
                 .foregroundStyle(.ultraThinMaterial)
                 .overlay(
                     PointerShape()
@@ -241,7 +241,7 @@ private struct NeedleView: View {
                     PointerShape()
                         .stroke(LinearGradient(colors: [.white.opacity(0.6), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1.5)
                 )
-                .rotationEffect(angle - .degrees(90)) // ** FIX 2: Correct the rotation angle
+                .rotationEffect(angle - .degrees(90))
                 .shadow(color: .black.opacity(0.3), radius: 5, y: 5)
             
             // Pivot point
@@ -256,19 +256,15 @@ private struct NeedleView: View {
     }
 }
 
-// Custom shape for the new pointer
+// ** THIS IS THE CHANGE **
+// Custom shape for the new pointer, now a classic triangle.
 private struct PointerShape: Shape {
     func path(in rect: CGRect) -> Path {
         Path { path in
-            path.move(to: CGPoint(x: rect.midX, y: rect.minY))
-            path.addQuadCurve(
-                to: CGPoint(x: rect.midX, y: rect.maxY),
-                control: CGPoint(x: rect.midX + rect.width * 0.5, y: rect.height * 0.5)
-            )
-            path.addQuadCurve(
-                to: CGPoint(x: rect.midX, y: rect.minY),
-                control: CGPoint(x: rect.midX - rect.width * 0.5, y: rect.height * 0.5)
-            )
+            path.move(to: CGPoint(x: rect.midX, y: rect.minY)) // Tip of the pointer
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY)) // Bottom-right corner
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY)) // Bottom-left corner
+            path.closeSubpath()
         }
     }
 }
