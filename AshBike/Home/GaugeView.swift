@@ -73,18 +73,22 @@ private struct LiquidGlassArcView: View {
                 .blur(radius: 1)
 
             // 3. Internal Illumination that "lights up" the glass
+            let gradient = AngularGradient(
+                gradient: Gradient(colors: [.green, .yellow, .orange, .red]),
+                center: .center,
+                startAngle: .degrees(135), // Corresponds to the start of the arc
+                endAngle: .degrees(405)  // Corresponds to the end of the arc (135 + 270)
+            )
+
             GaugeArcShape()
-                .trim(from: 0, to: progress)
-                .stroke(
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color.cyan.opacity(0.8), Color.blue.opacity(0.8)]),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    style: strokeStyle
+                .stroke(gradient, style: strokeStyle)
+                .mask(
+                    GaugeArcShape()
+                        .trim(from: 0, to: progress)
+                        .stroke(style: strokeStyle)
                 )
-                .blur(radius: 10) // Soft, diffused glow
-                .shadow(color: .cyan.opacity(0.7), radius: CGFloat(progress * 20)) // The main light bleed effect
+                .blur(radius: 15) // Soft, diffused glow
+                .shadow(color: .white.opacity(0.4), radius: CGFloat(progress * 15)) // A neutral white glow to avoid color clashes
                 .blendMode(.plusLighter) // Makes the light "add" to the glass below
         }
     }
