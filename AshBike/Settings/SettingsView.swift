@@ -44,6 +44,7 @@ struct SettingsView: View {
 
     // State to control UI modes
     @State private var isEditingProfile = false
+    @State private var hasPerformedInitialCheck = true // New state to prevent flash
     @State private var connectivityExpanded = true
     @State private var ashbikeExpanded = true
     
@@ -57,17 +58,23 @@ struct SettingsView: View {
             Form {
                 // --- PROFILE SECTION (NOW A TRUE INLINE EDITOR) ---
                 Section {
-                    if let profile = profiles.first {
-                        // We toggle between the display card and the editor fields
-                        // based on the `isEditingProfile` state.
-                        if isEditingProfile {
-                            ProfileEditorView(profile: profile, isEditing: $isEditingProfile)
-                        } else {
-                            profileCard(for: profile)
+                    // Only show the profile UI after the initial check is complete.
+                    if hasPerformedInitialCheck {
+                        if let profile = profiles.first {
+                            if isEditingProfile {
+                                ProfileEditorView(profile: profile, isEditing: $isEditingProfile)
+                            } else {
+                                profileCard(for: profile)
+                            }
                         }
                     } else {
-                        // This will briefly appear before .onAppear runs
-                        Text("Creating Profile...")
+                        // Show a loading spinner during the initial check.
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            // ProfileEditorView(profile: profile, isEditing: $isEditingProfile)
+                            Spacer()
+                        }
                     }
                 }
 
@@ -131,15 +138,18 @@ struct SettingsView: View {
             } message: {
                 Text(alertMessage)
             }
-            // ** THIS IS THE CHANGE **
-            // When the view appears, it checks if a profile exists.
-            // If not, it creates and saves one.
             .onAppear {
+                // Don't run this logic again if it's already done.
+                guard !hasPerformedInitialCheck else { return }
+
                 if profiles.isEmpty {
                     let defaultProfile = UserProfile()
                     context.insert(defaultProfile)
                     try? context.save()
                 }
+                
+                // Mark the check as complete so the UI can update.
+                hasPerformedInitialCheck = true
             }
         }
     }

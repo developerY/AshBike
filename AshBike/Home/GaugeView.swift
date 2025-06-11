@@ -12,134 +12,75 @@ struct GaugeView: View {
     var maxSpeed: Double = 60
     var onMapButtonTapped: () -> Void // Action to show the map
 
-    // Define the angle range for the gauge
-    private let startAngle = Angle(degrees: 135)
-    private let endAngle = Angle(degrees: 45)
-
     var body: some View {
         GeometryReader { geometry in
             let radius = min(geometry.size.width, geometry.size.height) / 2
             let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
-            let speedProgress = min(speed / maxSpeed, 1.0)
-            let strokeStyle = StrokeStyle(lineWidth: radius * 0.15, lineCap: .round)
 
             ZStack {
-                // MARK: - Layer 1: Background & Ticks
-                GaugeArc()
-                    .stroke(style: strokeStyle)
-                    .fill(Color.gray.opacity(0.3))
+                // Layer 1: 3D Glass Background & Ticks
+                GaugeBackgroundView(radius: radius)
+                TicksAndLabelsView(center: center, radius: radius, maxSpeed: maxSpeed)
 
-                TicksAndLabels(center: center, radius: radius)
-
-                // MARK: - Layer 2: Progress Arc
-                GaugeArc()
-                    .trim(from: 0.0, to: min(speedProgress, 0.333))
-                    .stroke(Color.green, style: strokeStyle)
-                GaugeArc()
-                    .trim(from: 0.333, to: min(speedProgress, 0.666))
-                    .stroke(Color.yellow, style: strokeStyle)
-                GaugeArc()
-                    .trim(from: 0.666, to: min(speedProgress, 0.833))
-                    .stroke(Color.orange, style: strokeStyle)
-                GaugeArc()
-                    .trim(from: 0.833, to: speedProgress)
-                    .stroke(Color.red, style: strokeStyle)
-
-                // MARK: - Layer 3: Center Text Display
-                VStack(spacing: 8) {
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(String(format: "%.0f", speed))
-                            .font(.system(size: radius * 0.5, weight: .bold))
-                        Text("km/h")
-                            .font(.system(size: radius * 0.15, weight: .semibold))
-                    }
-                    
-                    Text(headingString(from: heading))
-                        .font(.system(size: radius * 0.18, weight: .medium))
-                        .padding(8)
-                        .background(Color.blue.opacity(0.6))
-                        .cornerRadius(8)
-                        .foregroundColor(.white)
-                }
-                .offset(y: radius * 0.1)
-
-                // MARK: - Layer 4: Needle
-                needlePath(for: speed, in: center, radius: radius)
-                    .fill(Color.red)
-                    .shadow(radius: 2)
+                // Layer 2: Glowing Progress Arc
+                GlowingArcView(radius: radius, speed: speed, maxSpeed: maxSpeed)
                 
-                // MARK: - Layer 5: Pivot Point
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: radius * 0.1, height: radius * 0.1)
+                // Layer 3: Center Text Display
+                CenterTextView(radius: radius, speed: speed, heading: heading)
+
+                // Layer 4: Needle
+                NeedleView(radius: radius, speed: speed, maxSpeed: maxSpeed)
                 
-                // MARK: - Layer 6: Map Icon Button
-                // This VStack/HStack with Spacers will push the button to the bottom-right corner.
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Button(action: onMapButtonTapped) {
-                            Image(systemName: "map.fill")
-                                .font(.title2)
-                                .padding()
-                                .background(.thinMaterial)
-                                .foregroundColor(.secondary)
-                                .clipShape(Circle())
-                                .shadow(radius: 3)
-                        }
-                        .padding([.bottom, .trailing]) // Apply padding to keep it from the edges
-                    }
-                }
+                // Layer 5: Map Icon Button
+                MapButton(action: onMapButtonTapped)
             }
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .aspectRatio(1, contentMode: .fit)
     }
+}
+
+
+// MARK: - Sub-components for GaugeView
+
+private struct GaugeBackgroundView: View {
+    let radius: CGFloat
     
-    private func needlePath(for speed: Double, in center: CGPoint, radius: CGFloat) -> Path {
-        let totalAngle = Angle(degrees: 270)
-        let progress = min(speed / maxSpeed, 1.0)
-        let angle = startAngle + (totalAngle * progress)
-        let pointerLength = radius * 0.9
-        let baseWidth: CGFloat = 10
-
-        var path = Path()
-        path.move(to: CGPoint(x: 0, y: -baseWidth / 2))
-        path.addLine(to: CGPoint(x: 0, y: baseWidth / 2))
-        path.addLine(to: CGPoint(x: pointerLength, y: 0))
-        path.closeSubpath()
-        
-        return path.applying(CGAffineTransform(rotationAngle: CGFloat(angle.radians)))
-                   .applying(CGAffineTransform(translationX: center.x, y: center.y))
-    }
-
-    private func headingString(from direction: Double) -> String {
-        let directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
-        let index = Int((direction + 11.25) / 22.5) & 15
-        return String(format: "%.0f° %@", direction, directions[index])
-    }
-}
-
-private struct GaugeArc: Shape {
-    func path(in rect: CGRect) -> Path {
-        var p = Path()
-        let center = CGPoint(x: rect.midX, y: rect.midY)
-        let radius = min(rect.width, rect.height) / 2
-        
-        p.addArc(center: center,
-                 radius: radius,
-                 startAngle: Angle(degrees: 135),
-                 endAngle: Angle(degrees: 45),
-                 clockwise: false)
-        
-        return p
+    var body: some View {
+        // Base of the gauge
+        Circle()
+            .fill(
+                RadialGradient(
+                    gradient: Gradient(colors: [Color.gray.opacity(0.3), Color.black.opacity(0.6)]),
+                    center: .center,
+                    startRadius: radius * 0.8,
+                    endRadius: radius
+                )
+            )
+        // Inner shadow for depth
+        Circle()
+            .stroke(Color.black.opacity(0.5), lineWidth: 2)
+            .blur(radius: 2)
+            .offset(x: 1, y: 1)
+            .mask(Circle().stroke(lineWidth: 4))
+            
+        // Glassy highlight
+        Circle()
+            .fill(
+                LinearGradient(
+                    gradient: Gradient(colors: [Color.white.opacity(0.2), Color.white.opacity(0.0)]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .frame(width: radius * 2, height: radius * 2)
     }
 }
 
-private struct TicksAndLabels: View {
-    var center: CGPoint
-    var radius: CGFloat
-    let maxSpeed: Double = 60
+private struct TicksAndLabelsView: View {
+    let center: CGPoint
+    let radius: CGFloat
+    let maxSpeed: Double
     private let tickCount = 7
 
     var body: some View {
@@ -148,47 +89,175 @@ private struct TicksAndLabels: View {
                 let value = Double(i) * (maxSpeed / Double(tickCount - 1))
                 let angle = angleForValue(value)
                 
-                let tickLabelRadius = radius * 0.75
-                let xPos = center.x + tickLabelRadius * cos(CGFloat(angle.radians))
-                let yPos = center.y + tickLabelRadius * sin(CGFloat(angle.radians))
-
-                let tickMarkRadius = radius * 0.9
-                let xTickPos = center.x + tickMarkRadius * cos(CGFloat(angle.radians))
-                let yTickPos = center.y + tickMarkRadius * sin(CGFloat(angle.radians))
-                
+                // Tick Marks
                 Rectangle()
-                    .fill(Color.primary)
+                    .fill(Color.white.opacity(0.8))
                     .frame(width: 2, height: 10)
-                    .position(x: xTickPos, y: yTickPos)
+                    .position(x: center.x + (radius * 0.9) * cos(CGFloat(angle.radians)),
+                              y: center.y + (radius * 0.9) * sin(CGFloat(angle.radians)))
                     .rotationEffect(angle + .degrees(90))
 
+                // Tick Labels
                 Text(String(format: "%.0f", value))
-                    .font(.caption.bold())
-                    .position(x: xPos, y: yPos)
+                    .font(.system(size: radius * 0.1, weight: .bold))
+                    .foregroundStyle(.white)
+                    .position(x: center.x + (radius * 0.75) * cos(CGFloat(angle.radians)),
+                              y: center.y + (radius * 0.75) * sin(CGFloat(angle.radians)))
             }
         }
     }
     
     private func angleForValue(_ value: Double) -> Angle {
-        let startAngle = Angle(degrees: 135)
-        let totalAngle = Angle(degrees: 270)
-        let progress = value / maxSpeed
-        return startAngle + (totalAngle * progress)
+        .degrees(135) + .degrees(270 * (value / maxSpeed))
     }
 }
 
-/*struct GaugeView_Previews: PreviewProvider {
+private struct GlowingArcView: View {
+    let radius: CGFloat
+    let speed: Double
+    let maxSpeed: Double
+    
+    private var progress: Double { min(speed / maxSpeed, 1.0) }
+    private var strokeStyle: StrokeStyle { StrokeStyle(lineWidth: radius * 0.15, lineCap: .round) }
+    
+    private var gradient: AngularGradient {
+        AngularGradient(
+            gradient: Gradient(colors: [.green, .yellow, .red]),
+            center: .center,
+            startAngle: .degrees(135),
+            endAngle: .degrees(135 + 270)
+        )
+    }
+
+    var body: some View {
+        // Background track for the glow
+        GaugeArcShape()
+            .stroke(Color.black.opacity(0.5), style: strokeStyle)
+            .blur(radius: 2)
+        
+        // The glowing progress bar
+        GaugeArcShape()
+            .trim(from: 0.0, to: progress)
+            .stroke(gradient, style: strokeStyle)
+            .shadow(color: .green.opacity(0.5), radius: CGFloat(progress * 15)) // Glow effect
+            .shadow(color: .yellow.opacity(progress > 0.5 ? 0.7 : 0), radius: CGFloat(progress * 15))
+            .shadow(color: .red.opacity(progress > 0.8 ? 0.9 : 0), radius: CGFloat(progress * 15))
+    }
+}
+
+private struct CenterTextView: View {
+    let radius: CGFloat
+    let speed: Double
+    let heading: Double
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(String(format: "%.0f", speed))
+                    .font(.system(size: radius * 0.5, weight: .bold))
+                Text("km/h")
+                    .font(.system(size: radius * 0.15, weight: .semibold))
+            }
+            Text(headingString(from: heading))
+                .font(.system(size: radius * 0.18, weight: .medium))
+                .padding(8)
+                .background(Color.blue.opacity(0.7))
+                .cornerRadius(8)
+        }
+        .foregroundStyle(.white)
+        .shadow(radius: 2)
+        .offset(y: radius * 0.1)
+    }
+    
+    private func headingString(from direction: Double) -> String {
+        let directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+        let index = Int((direction + 11.25) / 22.5) & 15
+        return String(format: "%.0f° %@", direction, directions[index])
+    }
+}
+
+private struct NeedleView: View {
+    let radius: CGFloat
+    let speed: Double
+    let maxSpeed: Double
+    
+    private var angle: Angle { .degrees(135) + .degrees(270 * (speed / maxSpeed)) }
+    
+    var body: some View {
+        // Needle
+        Capsule()
+            .trim(from: 0.5, to: 1)
+            .stroke(
+                LinearGradient(gradient: Gradient(colors: [.red, .red.opacity(0.5)]), startPoint: .top, endPoint: .bottom),
+                lineWidth: 4
+            )
+            .frame(width: radius * 1.6, height: radius * 1.6)
+            .rotationEffect(angle)
+            .shadow(color: .red, radius: 5)
+        
+        // Pivot point
+        Circle()
+            .fill(
+                RadialGradient(
+                    gradient: Gradient(colors: [.white, .gray]),
+                    center: .center, startRadius: 0, endRadius: radius * 0.05
+                )
+            )
+            .frame(width: radius * 0.1, height: radius * 0.1)
+            .shadow(radius: 1)
+    }
+}
+
+private struct MapButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                Button(action: action) {
+                    Image(systemName: "map.fill")
+                        .font(.title2)
+                        .padding()
+                        .background(.thinMaterial)
+                        .foregroundStyle(.primary)
+                        .clipShape(Circle())
+                        .shadow(radius: 3)
+                }
+                .padding()
+            }
+        }
+    }
+}
+
+// MARK: - Reusable Arc Shape
+
+private struct GaugeArcShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = min(rect.width, rect.height) / 2
+        
+        p.addArc(center: center,
+                 radius: radius,
+                 startAngle: .degrees(135),
+                 endAngle: .degrees(45),
+                 clockwise: false)
+        
+        return p
+    }
+}
+
+
+// MARK: - Preview
+
+struct GaugeView_Previews: PreviewProvider {
     static var previews: some View {
-        GaugeView(speed: 45, heading: 0, onMapButtonTapped: { print("Map tapped") })
+        GaugeView(speed: 45, heading: 270, onMapButtonTapped: { print("Map tapped") })
             .frame(width: 300, height: 300)
             .padding()
-            .background(Color.gray)
+            .background(Color(red: 0.1, green: 0.1, blue: 0.2))
             .previewLayout(.sizeThatFits)
     }
-}*/
-
-import Playgrounds
-
-#Playground {
-    print("hi")
 }
