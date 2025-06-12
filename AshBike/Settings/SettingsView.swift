@@ -44,7 +44,7 @@ struct SettingsView: View {
 
     // State to control UI modes
     @State private var isEditingProfile = false
-    @State private var hasPerformedInitialCheck = true // New state to prevent flash
+    @State private var hasPerformedInitialCheck = false // New state to prevent flash
     @State private var connectivityExpanded = true
     @State private var ashbikeExpanded = true
     
