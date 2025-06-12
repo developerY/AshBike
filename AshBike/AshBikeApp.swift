@@ -13,7 +13,8 @@ struct AshBikeApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             DataExampleItem.self, // Example Data
-            BikeRide.self // Bike Data
+            BikeRide.self, // Bike Data
+            UserProfile.self // Add this line
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
