@@ -36,8 +36,8 @@ struct GaugeView: View {
                 NeedleView(radius: radius, speed: speed, maxSpeed: maxSpeed)
 
                 // Layer 5: Center Text Display (now on top of the needle)
-                CenterTextView(radius: radius, speed: speed, heading: heading)
-                
+                CenterTextView(radius: radius, speed: speed, heading: heading, maxSpeed: maxSpeed) // Pass maxSpeed here
+
                 // Layer 6: Map Icon Button
                 MapButton(action: onMapButtonTapped)
             }
@@ -155,6 +155,45 @@ private struct CenterTextView: View {
     let radius: CGFloat
     let speed: Double
     let heading: Double
+    let maxSpeed: Double // Add this new property
+
+    // Define the same colors used in LiquidGlassArcView's gradient for consistent matching
+    private var speedColor: Color {
+        let colors: [Color] = [.green, .yellow, .orange, .red] // Matches LiquidGlassArcView
+        return Color.colorForSpeed(speed: speed, maxSpeed: maxSpeed, colors: colors)
+    }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(String(format: "%.0f", speed))
+                    .font(.system(size: radius * 0.6, weight: .bold))
+                    .foregroundStyle(speedColor) // Apply the dynamic color here
+                Text("km/h")
+                    .font(.system(size: radius * 0.18, weight: .semibold))
+                    .foregroundStyle(speedColor) // Apply to unit as well for consistency
+            }
+            Text(headingString(from: heading))
+                .font(.system(size: radius * 0.18, weight: .medium))
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(.black.opacity(0.3))
+                .cornerRadius(12)
+        }
+        // Remove .foregroundStyle(.white) from this VStack, as it's now applied directly to the Text views
+        .shadow(color: .black.opacity(0.5), radius: 3, y: 2)
+    }
+
+    private func headingString(from direction: Double) -> String {
+        let directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+        let index = Int((direction + 11.25) / 22.5) & 15
+        return String(format: "%.0f° %@", direction, directions[index])
+    }
+}
+
+private struct CenterTextViewOrig: View {
+    let radius: CGFloat
+    let speed: Double
+    let heading: Double
     
     var body: some View {
         VStack(spacing: 8) {
@@ -170,7 +209,7 @@ private struct CenterTextView: View {
                 .background(.black.opacity(0.3))
                 .cornerRadius(12)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.black)//.white)
         .shadow(color: .black.opacity(0.5), radius: 3, y: 2)
     }
     
