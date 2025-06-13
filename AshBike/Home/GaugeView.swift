@@ -233,13 +233,13 @@ private struct NeedleView: View {
                 .frame(width: radius * 0.08, height: radius * 0.9)
                 .offset(y: -radius * 0.45)
                 .foregroundStyle(.primary) // Change this from .ultraThinMaterial to .black
+            
                 // Remove the white highlight overlay as it's intended for frosted glass look
-                /*
                 .overlay(
                     PointerShape()
                         .stroke(LinearGradient(colors: [.white.opacity(0.6), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1.5)
                 )
-                */
+                
                 .rotationEffect(angle + .degrees(90))
                 .shadow(color: .black.opacity(0.6), radius: 5, y: 5) // Adjust shadow for better visibility on black
 
