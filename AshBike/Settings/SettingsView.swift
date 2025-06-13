@@ -44,7 +44,6 @@ struct SettingsView: View {
 
     // State to control UI modes
     @State private var isEditingProfile = false
-    @State private var hasPerformedInitialCheck = false // New state to prevent flash
     @State private var connectivityExpanded = true
     @State private var ashbikeExpanded = true
     
@@ -58,21 +57,17 @@ struct SettingsView: View {
             Form {
                 // --- PROFILE SECTION (NOW A TRUE INLINE EDITOR) ---
                 Section {
-                    // Only show the profile UI after the initial check is complete.
-                    if hasPerformedInitialCheck {
-                        if let profile = profiles.first {
-                            if isEditingProfile {
-                                ProfileEditorView(profile: profile, isEditing: $isEditingProfile)
-                            } else {
-                                profileCard(for: profile)
-                            }
+                    if let profile = profiles.first {
+                        if isEditingProfile {
+                            ProfileEditorView(profile: profile, isEditing: $isEditingProfile)
+                        } else {
+                            profileCard(for: profile)
                         }
                     } else {
                         // Show a loading spinner during the initial check.
                         HStack {
                             Spacer()
                             ProgressView()
-                            // ProfileEditorView(profile: profile, isEditing: $isEditingProfile)
                             Spacer()
                         }
                     }
@@ -139,17 +134,11 @@ struct SettingsView: View {
                 Text(alertMessage)
             }
             .onAppear {
-                // Don't run this logic again if it's already done.
-                guard !hasPerformedInitialCheck else { return }
-
                 if profiles.isEmpty {
                     let defaultProfile = UserProfile()
                     context.insert(defaultProfile)
                     try? context.save()
                 }
-                
-                // Mark the check as complete so the UI can update.
-                hasPerformedInitialCheck = true
             }
         }
     }
