@@ -126,26 +126,25 @@ private struct TicksAndLabelsView: View {
             ForEach(0..<tickCount) { i in
                 let value = Double(i) * (maxSpeed / Double(tickCount - 1))
                 let angle = angleForValue(value)
-                
-                // Tick Marks - reverted to simple style
+
+                // Tick Marks
                 Rectangle()
-                    .fill(Color.white.opacity(0.7))
+                    .fill(Color.black.opacity(0.7)) // Change from .fill(Color.white.opacity(0.7))
                     .frame(width: 2, height: 10)
                     .position(x: center.x + (radius * 0.9) * cos(CGFloat(angle.radians)),
                               y: center.y + (radius * 0.9) * sin(CGFloat(angle.radians)))
                     .rotationEffect(angle + .degrees(90))
 
-
-                // Tick Labels - position adjusted to be inside the arc
+                // Tick Labels
                 Text(String(format: "%.0f", value))
                     .font(.system(size: radius * 0.1, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(.black.opacity(0.8)) // Change from .foregroundStyle(.white.opacity(0.8))
                     .position(x: center.x + (radius * 0.78) * cos(CGFloat(angle.radians)),
                               y: center.y + (radius * 0.78) * sin(CGFloat(angle.radians)))
             }
         }
     }
-    
+
     private func angleForValue(_ value: Double) -> Angle {
         .degrees(135) + .degrees(270 * (value / maxSpeed))
     }
@@ -229,25 +228,29 @@ private struct NeedleView: View {
 
     var body: some View {
         ZStack {
-            // Frosted Glass Pointer
+            // Main Pointer part (the arrow shape)
             PointerShape()
                 .frame(width: radius * 0.08, height: radius * 0.9)
                 .offset(y: -radius * 0.45)
-                .foregroundStyle(.ultraThinMaterial)
+                .foregroundStyle(.primary) // Change this from .ultraThinMaterial to .black
+                // Remove the white highlight overlay as it's intended for frosted glass look
+                /*
                 .overlay(
                     PointerShape()
                         .stroke(LinearGradient(colors: [.white.opacity(0.6), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1.5)
                 )
-                .rotationEffect(angle + .degrees(90)) // Corrected rotation
-                .shadow(color: .black.opacity(0.4), radius: 5, y: 5)
-            
-            // Pivot point - now drawn as part of the needle
+                */
+                .rotationEffect(angle + .degrees(90))
+                .shadow(color: .black.opacity(0.6), radius: 5, y: 5) // Adjust shadow for better visibility on black
+
+            // Pivot point (the circle at the base of the needle)
             Circle()
-                .fill(.background)
+                .fill(.secondary) // Change this from .background to .black
                 .frame(width: radius * 0.2, height: radius * 0.2)
                 .shadow(radius: 3)
                 .overlay(
-                    Circle().stroke(Color.black.opacity(0.2), lineWidth: 1)
+                    // Change the stroke color for contrast against a black background
+                    Circle().stroke(Color.gray.opacity(0.5), lineWidth: 1)
                 )
         }
     }
