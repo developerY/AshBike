@@ -49,7 +49,6 @@ struct RideListView: View {
             }
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Button { addDebugRide() } label: { Image(systemName: "plus") }
                     Button { deleteAllRides() } label: { Image(systemName: "trash") }
                 }
             }
@@ -64,11 +63,6 @@ struct RideListView: View {
                 checkAllRidesSyncStatus()
             }
         }
-    }
-    
-    private func addDebugRide() {
-        let newRide = makeRandomBikeRide()
-        modelContext.insert(newRide)
     }
     
     private func delete(_ ride: BikeRide) {
