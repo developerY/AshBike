@@ -73,6 +73,7 @@ struct RideListView: View {
     
     private func delete(_ ride: BikeRide) {
         modelContext.delete(ride)
+        try? modelContext.save() // Add this line
     }
     
     private func deleteAllRides() {
