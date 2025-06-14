@@ -68,19 +68,20 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         timer = nil
     }
     
-    // This function stops the recording and saves the ride
-    func stopAndSave(context: ModelContext) {
-        guard isRecording else { return } // Prevent saving if not recording
+    // --- MODIFIED ---
+    // This function now stops the recording and returns the generated ride,
+    // but does not save it.
+    func stop() -> BikeRide? {
+        guard isRecording else { return nil } // Prevent action if not recording
         
         stopTimer()
         
-        if let ride = generateBikeRide() {
-            context.insert(ride)
-            try? context.save()
-        }
+        let ride = generateBikeRide()
         
         isRecording = false
         resetRecordingMetrics()
+        
+        return ride
     }
     
     // Resets only the properties related to a recorded ride

@@ -18,6 +18,12 @@ final class RideDataManager {
         self.store = RideStore(modelContainer: modelContainer)
     }
 
+    // --- NEW ---
+    // A public method to save a ride. It delegates the call to the actor.
+    func save(ride: BikeRide) async throws {
+        try await store.saveRide(ride)
+    }
+
     // Its methods simply delegate the actual work to the actor,
     // ensuring the database writes happen in a thread-safe context.
     func deleteAllRides() async throws {

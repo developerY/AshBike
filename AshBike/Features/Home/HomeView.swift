@@ -4,6 +4,7 @@
 //
 //  Created by Siamak Ashrafi on 5/23/25.
 //
+//
 import SwiftUI
 import Observation
 import MapKit
@@ -12,7 +13,7 @@ import SwiftData
 struct HomeView: View {
     // Use @State instead of @StateObject for the new @Observable model
     @Environment(RideSessionManager.self) private var session
-    @Environment(\.modelContext) private var modelContext
+    @Environment(RideDataManager.self) private var rideDataManager // --- ADDED
     
     // State for the accordion sections
     private enum ExpandedSection {
@@ -90,9 +91,19 @@ struct HomeView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(session.isRecording)
 
-                // The Stop button is disabled if a ride is NOT in progress
+                // --- MODIFIED ---
+                // The Stop button's action now runs an async task to handle saving.
                 Button(action: {
-                    session.stopAndSave(context: modelContext)
+                    Task {
+                        if let ride = session.stop() {
+                            do {
+                                try await rideDataManager.save(ride: ride)
+                            } catch {
+                                // Optional: Add user-facing error handling
+                                print("Failed to save ride: \(error.localizedDescription)")
+                            }
+                        }
+                    }
                 }) {
                     Image(systemName: "stop.fill")
                         .font(.largeTitle)
