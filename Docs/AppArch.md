@@ -22,3 +22,6 @@ While not every project will have an identical folder structure, the underlying 
 ### Conclusion
 
 The proposed structure is not just a random assortment of folders; it's a deliberate design that promotes scalability, readability, and maintainability. By separating your application into distinct layers—**Features (What the user sees)**, **Services (How the app works)**, **Models (What the app knows)**, and **Shared (The common toolkit)**—you are following the exact patterns that Apple teaches and demonstrates in its best-in-class examples. This is an excellent foundation for building a robust and professional-quality app.
+
+
+Test
