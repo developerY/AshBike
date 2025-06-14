@@ -7,7 +7,7 @@
 import SwiftData
 import Foundation
 
-
+// The updated RideStore focuses on handling write operations.
 actor RideStore {
     private let modelContainer: ModelContainer
 
@@ -15,16 +15,23 @@ actor RideStore {
         self.modelContainer = modelContainer
     }
 
+    // Example of a simple, single-item write.
     func saveRide(_ ride: BikeRide) async throws {
         let context = ModelContext(modelContainer)
         context.insert(ride)
         try context.save()
     }
 
-    func fetchAllRides() async throws -> [BikeRide] {
+    // --- NEW: Example of a complex/batch write operation ---
+    // This encapsulates the logic for deleting all rides in a single,
+    // clearly-defined place.
+    func deleteAllRides() async throws {
         let context = ModelContext(modelContainer)
-        let descriptor = FetchDescriptor<BikeRide>(sortBy: [SortDescriptor(\.startTime, order: .reverse)])
-        return try context.fetch(descriptor)
+        try context.delete(model: BikeRide.self)
+        // Note: You don't need to call context.save() after a batch delete.
     }
-}
 
+    // You could add other complex writes here in the future,
+    // for example, a function to import rides from a file.
+    // func importRides(from file: URL) async throws { ... }
+}

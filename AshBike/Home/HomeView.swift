@@ -11,7 +11,7 @@ import SwiftData
 
 struct HomeView: View {
     // Use @State instead of @StateObject for the new @Observable model
-    @State private var session = RideSessionManager()
+    @Environment(RideSessionManager.self) private var session
     @Environment(\.modelContext) private var modelContext
     
     // State for the accordion sections

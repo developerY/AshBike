@@ -13,9 +13,8 @@ struct RideListView: View {
     private var rides: [BikeRide]
     
     @Environment(\.modelContext) private var modelContext
-    
-    @State private var healthKitService = HealthKitService()
-    
+    @Environment(HealthKitService.self) private var healthKitService
+
     // NEW: A single source of truth for the sync status of all rides in this view
     @State private var syncedRideIDs: Set<UUID> = []
     

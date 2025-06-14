@@ -7,7 +7,10 @@
 import Foundation
 import HealthKit
 import CoreLocation
+import Observation // Add this import
 
+
+@Observable
 class HealthKitService {
     
     private let healthStore = HKHealthStore()

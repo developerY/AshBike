@@ -24,11 +24,18 @@ struct AshBikeApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
+    
+    // Create single instances of your services
+    @State private var healthKitService = HealthKitService()
+    @State private var rideSessionManager = RideSessionManager()
 
     var body: some Scene {
         WindowGroup {
             //RideDetailViewSimple()
             MainTabView()
+                // Place the services into the environment
+                .environment(healthKitService)
+                .environment(rideSessionManager)
         }
         .modelContainer(sharedModelContainer)
     }
