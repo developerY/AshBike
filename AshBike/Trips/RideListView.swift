@@ -33,7 +33,7 @@ struct RideListView: View {
                     LazyVStack(spacing: 12) {
                         ForEach(rides) { ride in
                             NavigationLink(value: ride) {
-                                RideCardViewSimple(
+                                RideCardView(
                                     ride: ride,
                                     // Pass the sync status down to the card
                                     isSynced: syncedRideIDs.contains(ride.id),
