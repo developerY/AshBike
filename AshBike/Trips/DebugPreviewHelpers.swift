@@ -7,55 +7,6 @@
 import Foundation
 import CoreLocation
 
-func makeRandomBikeRideOrig(
-  duration: TimeInterval = 3600,   // 1h
-  points:   Int           = 20,    // GPS fixes
-  weightKg: Double        = 70
-) -> BikeRide {
-  let now       = Date()
-  let startTime = now.addingTimeInterval(-duration)
-  let endTime   = now
-
-  // spread timestamps
-  let dt = duration / Double(max(points - 1, 1))
-  let stamps = (0..<points).map { i in
-    startTime.addingTimeInterval(Double(i) * dt)
-  }
-
-  // generate random points
-  let locs = stamps.map { RideLocation.random(at: $0) }
-
-  // total distance
-  let dist = zip(locs, locs.dropFirst()).reduce(0) { sum, pair in
-    let (a, b) = pair
-    let ca = CLLocation(latitude: a.latitude,  longitude: a.longitude)
-    let cb = CLLocation(latitude: b.latitude,  longitude: b.longitude)
-    return sum + ca.distance(from: cb)
-  }
-
-  // speeds
-  let speeds   = locs.compactMap { $0.speed }
-  let avgSpd   = dist / duration
-  let maxSpd   = speeds.max() ?? avgSpd
-
-  // calories @ MET=8
-  let hrs      = duration / 3600
-  let calories = Int(8 * weightKg * hrs)
-
-  return BikeRide(
-    startTime:     startTime,
-    endTime:       endTime,
-    totalDistance: dist,
-    avgSpeed:      avgSpd,
-    maxSpeed:      maxSpd,
-    elevationGain: 0,
-    calories:      calories,
-    notes:         "🛠 debug ride",
-    locations:     locs
-  )
-}
-
-
 // 20 minutes ago
 let startPoint = RideLocation.random(at: Date().addingTimeInterval(-1200))
 // 10 minutes ago
@@ -116,29 +67,6 @@ extension RideLocation {
  let lon = Double.random(in: -122.05...-122.00)
 
  */
-
-
-// A little helper to create random demo rides -- no args
-func makeRandomBikeRide() -> BikeRide {
-  let start = Date().addingTimeInterval(-Double.random(in: 600...3600))
-  let end   = Date()
-  let dist  = Double.random(in: 500...10_000)
-  let avg   = dist / (end.timeIntervalSince(start))
-  let max   = avg * Double.random(in: 1.1...1.5)
-  return BikeRide(
-    startTime: start,
-    endTime:   end,
-    totalDistance: dist,
-    avgSpeed:      avg,
-    maxSpeed:      max,
-    elevationGain: Double.random(in: 0...200),
-    calories:      Int(avg * 3.6 * 60 / 20), // totally made‐up formula
-    notes:         nil,
-    locations:     []
-  )
-}
-
-
 
 /// Generate a completely random BikeRide for testing / previews
 func makeRandomBikeRide(
