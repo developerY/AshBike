@@ -19,7 +19,6 @@ struct AshBikeApp: App {
     
     init() {
         let schema = Schema([
-            DataExampleItem.self,
             BikeRide.self,
             UserProfile.self
         ])
