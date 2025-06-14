@@ -4,7 +4,6 @@
 //
 //  Created by Siamak Ashrafi on 5/23/25.
 //
-//
 import SwiftUI
 import Observation
 import MapKit
@@ -13,8 +12,12 @@ import SwiftData
 struct HomeView: View {
     // Use @State instead of @StateObject for the new @Observable model
     @Environment(RideSessionManager.self) private var session
-    @Environment(RideDataManager.self) private var rideDataManager // --- ADDED
+    @Environment(RideDataManager.self) private var rideDataManager
     
+    // --- ADDED ---
+    // A query to fetch the user's profile from SwiftData.
+    @Query private var profiles: [UserProfile]
+
     // State for the accordion sections
     private enum ExpandedSection {
         case metrics, ebike
@@ -82,8 +85,14 @@ struct HomeView: View {
             
             // — Controls —
             HStack(spacing: 40) {
-                // The Play button is disabled if a ride is already in progress
-                Button(action: { session.start() }) {
+                // --- MODIFIED ---
+                // The Play button now fetches the user's weight and passes it
+                // to the session manager.
+                Button(action: {
+                    // Use the first profile's weight, or a default if no profile exists.
+                    let userWeight = profiles.first?.weightKg ?? 75.0
+                    session.start(userWeightKg: userWeight)
+                }) {
                     Image(systemName: "play.fill")
                         .font(.largeTitle)
                         .frame(width: 60, height: 60)

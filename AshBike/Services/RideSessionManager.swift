@@ -26,8 +26,12 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     
     // State management
     var isRecording = false
-    var weight: Double = 72
     
+    // --- MODIFIED ---
+    // The hardcoded weight is removed and replaced with a private property
+    // that will be set when a ride starts.
+    private var userWeight: Double = 75 // A default weight in kg.
+
     private let locationManager = CLLocationManager()
     private var lastLocation: CLLocation?
     private var startDate: Date?
@@ -45,9 +49,14 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         locationManager.startUpdatingHeading()
     }
 
-    // Call this to begin recording a ride
-    func start() {
-        guard !isRecording else { return } // Prevent starting a new ride if one is active
+    // --- MODIFIED ---
+    // The start method now accepts the user's weight.
+    func start(userWeightKg: Double) {
+        guard !isRecording else { return }
+        
+        // Store the user's weight for the new ride
+        self.userWeight = userWeightKg
+        
         // Reset all recording metrics for a new ride
         distance = 0
         duration = 0
@@ -72,7 +81,7 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     // This function now stops the recording and returns the generated ride,
     // but does not save it.
     func stop() -> BikeRide? {
-        guard isRecording else { return nil } // Prevent action if not recording
+        guard isRecording else { return nil }
         
         stopTimer()
         
@@ -105,7 +114,7 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
             totalDistance: distance,
             avgSpeed: avgSpeed,
             maxSpeed: maxSpeed,
-            elevationGain: 0, // Placeholder
+            elevationGain: 0,
             calories: calories,
             notes: nil,
             locations: routeCoordinates.map {
@@ -125,14 +134,16 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     }
 
     private func startTimer() {
-        stopTimer() // Ensure no previous timer is running
+        stopTimer()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self = self, let start = self.startDate else { return }
             self.duration = Date().timeIntervalSince(start)
             if self.duration > 0 {
                 self.avgSpeed = self.distance / self.duration
             }
-            let kcal = self.metForSpeed(self.currentSpeed) * self.weight * (self.duration / 3600)
+            // --- MODIFIED ---
+            // The calorie calculation now uses the userWeight property.
+            let kcal = self.metForSpeed(self.currentSpeed) * self.userWeight * (self.duration / 3600)
             self.calories = Int(kcal)
         }
     }
