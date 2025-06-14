@@ -189,36 +189,6 @@ private struct CenterTextView: View {
     }
 }
 
-private struct CenterTextViewOrig: View {
-    let radius: CGFloat
-    let speed: Double
-    let heading: Double
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(String(format: "%.0f", speed))
-                    .font(.system(size: radius * 0.6, weight: .bold)) // Increased size
-                Text("km/h")
-                    .font(.system(size: radius * 0.18, weight: .semibold))
-            }
-            Text(headingString(from: heading))
-                .font(.system(size: radius * 0.18, weight: .medium))
-                .padding(.horizontal, 12).padding(.vertical, 8)
-                .background(.black.opacity(0.3))
-                .cornerRadius(12)
-        }
-        .foregroundStyle(.black)//.white)
-        .shadow(color: .black.opacity(0.5), radius: 3, y: 2)
-    }
-    
-    private func headingString(from direction: Double) -> String {
-        let directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
-        let index = Int((direction + 11.25) / 22.5) & 15
-        return String(format: "%.0f° %@", direction, directions[index])
-    }
-}
-
 private struct NeedleView: View {
     let radius: CGFloat
     let speed: Double
@@ -322,4 +292,3 @@ struct GaugeView_Previews: PreviewProvider {
             .previewLayout(.sizeThatFits)
     }
 }
-
