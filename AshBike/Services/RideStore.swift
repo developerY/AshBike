@@ -7,6 +7,7 @@
 import SwiftData
 import Foundation
 
+// NO @Observable macro here. This is our thread-safe worker.
 // The updated RideStore focuses on handling write operations.
 actor RideStore {
     private let modelContainer: ModelContainer
