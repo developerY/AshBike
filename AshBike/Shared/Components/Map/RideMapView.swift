@@ -81,17 +81,3 @@ struct RideMapView: View {
         return MKCoordinateRegion(center: center, span: span)
     }
 }
-
-
-// The CLLocationCoordinate2D type needs to be Hashable to be used in a ForEach loop.
-// This extension adds that conformance.
-extension CLLocationCoordinate2D: Hashable {
-    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
-        lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
-    }
-    
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(latitude)
-        hasher.combine(longitude)
-    }
-}

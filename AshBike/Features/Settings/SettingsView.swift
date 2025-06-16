@@ -8,28 +8,6 @@ import SwiftUI
 import SwiftData
 import HealthKit
 
-// MARK: - App Settings State Manager
-@Observable
-class AppSettings {
-    // We use UserDefaults to persist these settings across app launches.
-    var isHealthKitEnabled: Bool {
-        didSet { UserDefaults.standard.set(isHealthKitEnabled, forKey: "isHealthKitEnabled") }
-    }
-    // These properties are for the beta hardware features.
-    // They are set to 'false' by default.
-    var isNFCEnabled: Bool = false
-    var isQREnabled: Bool = false
-    var isBLEEnabled: Bool = false
-
-
-    init() {
-        self.isHealthKitEnabled = UserDefaults.standard.bool(forKey: "isHealthKitEnabled")
-        // We won't load the hardware settings from UserDefaults yet,
-        // as they are in beta.
-    }
-}
-
-
 // MARK: — SettingsView
 struct SettingsView: View {
     @Environment(\.modelContext) private var context
@@ -187,43 +165,6 @@ struct SettingsView: View {
         self.alertTitle = title
         self.alertMessage = message
         self.showingAlert = true
-    }
-}
-
-// MARK: — ProfileEditorView (Updated to include a Save button)
-struct ProfileEditorView: View {
-    @Bindable var profile: UserProfile
-    @Binding var isEditing: Bool
-    
-    @Environment(\.modelContext) private var context
-
-    var body: some View {
-        VStack {
-            TextField("Name", text: $profile.name)
-                .textFieldStyle(.roundedBorder)
-            
-            HStack {
-                TextField("Height (cm)", value: $profile.heightCm, format: .number)
-                    .keyboardType(.decimalPad)
-                TextField("Weight (kg)", value: $profile.weightKg, format: .number)
-                    .keyboardType(.decimalPad)
-            }
-            .textFieldStyle(.roundedBorder)
-            
-            HStack {
-                Button("Cancel", role: .cancel) {
-                    // Optional: Add logic to revert changes if needed
-                    isEditing = false
-                }
-                Spacer()
-                Button("Save") {
-                    try? context.save()
-                    isEditing = false
-                }
-                .buttonStyle(.borderedProminent)
-            }
-            .padding(.top)
-        }
     }
 }
 
