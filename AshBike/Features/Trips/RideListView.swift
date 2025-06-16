@@ -82,8 +82,16 @@ struct RideListView: View {
         }
     }
 
+    // --- MODIFIED FUNCTION ---
     private func delete(_ ride: BikeRide) {
         modelContext.delete(ride)
+        do {
+            // This line ensures the change is saved and the UI updates reliably.
+            try modelContext.save()
+        } catch {
+            // Handle potential errors during the save operation.
+            print("Failed to save context after deleting ride: \(error)")
+        }
     }
 
     private func checkAllRidesSyncStatus() {
