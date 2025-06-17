@@ -13,9 +13,10 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Query private var profiles: [UserProfile]
     
-    // State for the settings toggles and services
+    // --- MODIFIED ---
+    // Services are now correctly received from the environment.
+    @Environment(HealthKitService.self) private var healthKitService
     @State private var appSettings = AppSettings()
-    @State private var healthKitService = HealthKitService()
 
     // This determines if AshBike-specific hardware has been detected.
     @State private var isAshBikeHardwareDetected = true
@@ -177,4 +178,5 @@ struct SettingsView: View {
     
     return SettingsView()
         .modelContainer(container)
+        .environment(HealthKitService()) // Add service to preview environment
 }

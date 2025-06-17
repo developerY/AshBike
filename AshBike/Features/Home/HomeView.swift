@@ -25,6 +25,15 @@ struct HomeView: View {
     @State private var expandedSection: ExpandedSection? = .metrics
     @State private var isShowingMapSheet = false
 
+    // --- MODIFIED ---
+    // The formatter is now a static constant for better performance.
+    private static let durationFormatter: DateComponentsFormatter = {
+        let fmt = DateComponentsFormatter()
+        fmt.allowedUnits = [.hour, .minute, .second]
+        fmt.zeroFormattingBehavior = .pad
+        return fmt
+    }()
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
@@ -146,17 +155,18 @@ struct HomeView: View {
     }
 
     private func formattedDuration(_ sec: TimeInterval) -> String {
-        let fmt = DateComponentsFormatter()
-        fmt.allowedUnits = sec >= 3600
+        // Use the static formatter. Adjust units based on duration.
+        HomeView.durationFormatter.allowedUnits = sec >= 3600
             ? [.hour, .minute, .second]
             : [.minute, .second]
-        fmt.zeroFormattingBehavior = .pad
-        return fmt.string(from: sec) ?? "00:00"
+        return HomeView.durationFormatter.string(from: sec) ?? "00:00"
     }
 }
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
+            .environment(RideSessionManager())
+            .environment(RideDataManager(modelContainer: try! ModelContainer(for: UserProfile.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))))
     }
 }
