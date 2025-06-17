@@ -13,6 +13,8 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Query private var profiles: [UserProfile]
     
+    @Environment(RideDataManager.self) private var rideDataManager
+    
     // --- MODIFIED ---
     // Services are now correctly received from the environment.
     @Environment(HealthKitService.self) private var healthKitService
@@ -100,9 +102,16 @@ struct SettingsView: View {
                 
                 // --- DATA MANAGEMENT ---
                 Section("Data") {
+                    // --- WITH THIS NEW VERSION ---
                     Button("Delete All Rides", role: .destructive) {
-                        try? context.delete(model: BikeRide.self)
-                        showAlert(title: "Success", message: "All ride data has been deleted.")
+                        Task {
+                            do {
+                                try await rideDataManager.deleteAllRides()
+                                showAlert(title: "Success", message: "All ride data has been deleted.")
+                            } catch {
+                                showAlert(title: "Error", message: "Could not delete all rides. Please try again.")
+                            }
+                        }
                     }
                 }
             }

@@ -90,14 +90,15 @@ struct RideListView: View {
     }
 
     // --- MODIFIED FUNCTION ---
+    // --- WITH THIS NEW VERSION ---
     private func delete(_ ride: BikeRide) {
-        modelContext.delete(ride)
-        do {
-            // This line ensures the change is saved and the UI updates reliably.
-            try modelContext.save()
-        } catch {
-            appAlert = AppAlert(title: "Deletion Failed", message: "The ride could not be deleted. Please try again.")
-            print("Failed to save context after deleting ride: \(error)")
+        Task {
+            do {
+                try await rideDataManager.delete(ride: ride)
+                // The @Query property wrapper will automatically update the UI.
+            } catch {
+                appAlert = AppAlert(title: "Deletion Failed", message: "The ride could not be deleted. Please try again.")
+            }
         }
     }
 

@@ -23,6 +23,12 @@ final class RideDataManager {
     func save(ride: BikeRide) async throws {
         try await store.saveRide(ride)
     }
+    
+    // --- ADD THIS NEW FUNCTION ---
+    // A public method to delete a ride. It delegates the call to the actor.
+    func delete(ride: BikeRide) async throws {
+        try await store.deleteRide(id: ride.id)
+    }
 
     // Its methods simply delegate the actual work to the actor,
     // ensuring the database writes happen in a thread-safe context.

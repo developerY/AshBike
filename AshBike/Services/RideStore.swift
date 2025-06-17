@@ -22,6 +22,16 @@ actor RideStore {
         context.insert(ride)
         try context.save()
     }
+    
+    // --- ADD THIS NEW FUNCTION ---
+    // This handles deleting a single ride by its unique ID.
+    func deleteRide(id: UUID) async throws {
+        let context = ModelContext(modelContainer)
+        try context.delete(model: BikeRide.self, where: #Predicate { ride in
+            ride.id == id
+        })
+        // As this is a batch delete, an explicit save is not required.
+    }
 
     // --- NEW: Example of a complex/batch write operation ---
     // This encapsulates the logic for deleting all rides in a single,
