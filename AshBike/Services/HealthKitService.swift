@@ -14,7 +14,8 @@ import Observation
 class HealthKitService {
     
     private let healthStore = HKHealthStore()
-    private let rideIdentifierKey = "com.ashbike.ride.id" // Metadata key
+    // defined in Shared/Utilities/Constants.swift
+    //private let rideIdentifierKey = "com.ashbike.ride.id" // Metadata key
     
     // --- ADD THIS PROPERTY TO MANAGE THE OBSERVER QUERY ---
     private var heartRateQuery: HKObserverQuery?
@@ -127,8 +128,8 @@ class HealthKitService {
             return
         }
         
-        let predicate = HKQuery.predicateForObjects(withMetadataKey: rideIdentifierKey, allowedValues: rideIDs)
-        
+        let predicate = HKQuery.predicateForObjects(withMetadataKey: Constants.HealthKit.rideIdentifierKey, allowedValues: rideIDs)
+
         // Query for the Active Energy samples that contain our metadata.
         let query = HKSampleQuery(
             sampleType: HKSampleType.quantityType(forIdentifier: .activeEnergyBurned)!,
@@ -143,7 +144,7 @@ class HealthKitService {
             
             // Extract the original UUIDs from the sample metadata
             let syncedIDs = syncedSamples.compactMap { sample -> UUID? in
-                if let idString = sample.metadata?[self.rideIdentifierKey] as? String {
+                if let idString = sample.metadata?[Constants.HealthKit.rideIdentifierKey] as? String {
                     return UUID(uuidString: idString)
                 }
                 return nil
@@ -178,7 +179,7 @@ class HealthKitService {
         }
 
         // Attach our unique ride ID to the metadata of a sample that will always exist.
-        let metadata: [String: Any] = [self.rideIdentifierKey: bikeRide.id.uuidString]
+        let metadata: [String: Any] = [Constants.HealthKit.rideIdentifierKey: bikeRide.id.uuidString]
 
         let totalEnergyBurned = HKQuantity(unit: .kilocalorie(), doubleValue: Double(bikeRide.calories))
         let energySample = HKCumulativeQuantitySample(
