@@ -16,8 +16,16 @@ class HealthKitService {
     private let healthStore = HKHealthStore()
     private let rideIdentifierKey = "com.ashbike.ride.id" // Metadata key
     
+    // --- ADD THIS PROPERTY TO MANAGE THE OBSERVER QUERY ---
+    private var heartRateQuery: HKObserverQuery?
+    
+    // --- MODIFY THIS SET TO REQUEST HEART RATE PERMISSION ---
     private var readDataTypes: Set<HKObjectType> {
-        return [HKObjectType.workoutType()]
+        return [
+            HKObjectType.workoutType(),
+            // Add Heart Rate
+            HKObjectType.quantityType(forIdentifier: .heartRate)!
+        ]
     }
     
     private var writeDataTypes: Set<HKSampleType> {
@@ -36,6 +44,71 @@ class HealthKitService {
         }
         healthStore.requestAuthorization(toShare: writeDataTypes, read: readDataTypes, completion: completion)
     }
+    
+    // --- ADD THE FOLLOWING TWO FUNCTIONS TO THE CLASS ---
+
+     /// Starts a long-running query that observes for new heart rate samples.
+     func startObservingHeartRate(completion: @escaping (Double) -> Void) {
+         let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate)!
+         
+         // If a query is already active, stop it before starting a new one.
+         if let heartRateQuery = heartRateQuery {
+             healthStore.stop(heartRateQuery)
+         }
+
+         // Create a new observer query.
+         heartRateQuery = HKObserverQuery(
+             sampleType: heartRateType,
+             predicate: nil
+         ) { [weak self] (query, completionHandler, error) in
+             guard error == nil else { return }
+             
+             // When new data is available, fetch the most recent sample.
+             self?.fetchLatestHeartRateSample(completion: { sample in
+                 guard let sample = sample else { return }
+                 
+                 // Get the heart rate in Beats Per Minute (BPM)
+                 let heartRate = sample.quantity.doubleValue(for: .count().unitDivided(by: .minute()))
+                 
+                 // Pass the new value to the completion handler on the main thread
+                 DispatchQueue.main.async {
+                     completion(heartRate)
+                 }
+             })
+             
+             // Mark the query as complete to receive new updates.
+             completionHandler()
+         }
+         
+         // Execute the query.
+         healthStore.execute(heartRateQuery!)
+     }
+
+     /// Stops the active heart rate observer query.
+     func stopObservingHeartRate() {
+         if let heartRateQuery = heartRateQuery {
+             healthStore.stop(heartRateQuery)
+             self.heartRateQuery = nil
+         }
+     }
+     
+     /// Fetches the single most recent heart rate sample from HealthKit.
+     private func fetchLatestHeartRateSample(completion: @escaping (HKQuantitySample?) -> Void) {
+         let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate)!
+         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+         
+         let query = HKSampleQuery(
+             sampleType: heartRateType,
+             predicate: nil,
+             limit: 1,
+             sortDescriptors: [sortDescriptor]
+         ) { (query, samples, error) in
+             completion(samples?.first as? HKQuantitySample)
+         }
+         
+         healthStore.execute(query)
+     }
+
     
     // This function is no longer the primary method, but we can leave it.
     func checkIfRideIsSynced(ride: BikeRide, completion: @escaping (Bool) -> Void) {

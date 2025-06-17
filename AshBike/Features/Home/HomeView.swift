@@ -67,7 +67,11 @@ struct HomeView: View {
                                 MetricCard(label: "Avg Speed", value: String(format: "%.1f km/h", session.avgSpeed * 3.6))
                             }
                             HStack(spacing: 12) {
-                                MetricCard(label: "Heart Rate", value: "-- bpm")
+                                MetricCard(
+                                    label: "Heart Rate",
+                                    // Show a value only if it's greater than zero
+                                    value: session.heartRate > 0 ? String(format: "%.0f bpm", session.heartRate) : "-- bpm"
+                                )
                                 MetricCard(label: "Calories", value: "\(session.calories) kcal")
                             }
                         }

@@ -16,6 +16,9 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     var currentSpeed: Double = 0
     var heading: CLLocationDirection = 0
     
+    // --- ADD THE HEART RATE PROPERTY ---
+    var heartRate: Double = 0
+    
     // Recorded properties (only tracked during a ride)
     var distance: Double = 0
     var duration: TimeInterval = 0
@@ -43,6 +46,9 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
     private var startDate: Date?
     private var timer: Timer?
+    
+    // This requires access to the HealthKitService from the environment
+    private var healthKitService = HealthKitService()
 
     override init() {
         super.init()
@@ -58,6 +64,7 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
 
     // --- MODIFIED ---
     // The start method now accepts the user's weight.
+    // --- MODIFY THE START AND STOP METHODS ---
     func start(userWeightKg: Double) {
         guard !isRecording else { return }
         
@@ -69,8 +76,14 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         startDate = Date()
         startTimer()
         isRecording = true
-    }
 
+        // Start observing heart rate
+        healthKitService.startObservingHeartRate { [weak self] newHeartRate in
+            self?.heartRate = newHeartRate
+        }
+    }
+    
+    
     // This method now only stops the timer
     private func stopTimer() {
         timer?.invalidate()
@@ -83,6 +96,9 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     func stop() -> BikeRide? {
         guard isRecording else { return nil }
         
+        // Stop observing heart rate
+        healthKitService.stopObservingHeartRate()
+        
         stopTimer()
         
         let ride = generateBikeRide()
@@ -92,13 +108,15 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         
         return ride
     }
-    
+
+    // --- MODIFY THE RESET METHOD ---
     private func resetRecordingMetrics() {
         distance = 0
         duration = 0
         avgSpeed = 0
         maxSpeed = 0
         calories = 0
+        heartRate = 0 // Reset heart rate
         startDate = nil
         route.removeAll()
     }
