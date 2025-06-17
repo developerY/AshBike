@@ -9,6 +9,8 @@ import SwiftUI
 struct RideCardView: View {
     let ride: BikeRide
     let isSynced: Bool // Receives status from the parent
+    // --- 1. ADD NEW PROPERTY ---
+    let isSyncEnabled: Bool
     let onDelete: () -> Void
     let onSync: () -> Void
   
@@ -27,16 +29,19 @@ struct RideCardView: View {
             HStack {
                 Spacer()
                 
-                // The view now simply reflects the isSynced property
-                if isSynced {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                } else {
-                    Button(action: onSync) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .foregroundStyle(.blue)
+                // --- 2. WRAP SYNC LOGIC IN A CONDITION ---
+                if isSyncEnabled {
+                    // The view now simply reflects the isSynced property
+                    if isSynced {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    } else {
+                        Button(action: onSync) {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .foregroundStyle(.blue)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
                 
                 Button(action: onDelete) {
@@ -74,6 +79,7 @@ struct RideCardView: View {
     RideCardView(
         ride: sampleRide,
         isSynced: true,
+        isSyncEnabled: true,
       onDelete: { print("deleteSimple tapped") },
       onSync:   { print("syncSimple tapped")   }
     )

@@ -17,6 +17,10 @@ struct RideListView: View {
     // Receive services from the environment
     @Environment(HealthKitService.self) private var healthKitService
     @Environment(RideDataManager.self) private var rideDataManager
+    
+    // --- 1. ADD APPSETTINGS TO THE ENVIRONMENT ---
+    @Environment(AppSettings.self) private var appSettings
+
 
     // A single state variable to drive all alerts in this view.
     @State private var appAlert: AppAlert?
@@ -35,6 +39,8 @@ struct RideListView: View {
                                     ride: ride,
                                     // Pass the sync status down to the card
                                     isSynced: syncedRideIDs.contains(ride.id),
+                                    // --- 2. PASS THE SETTING TO THE CARD VIEW ---
+                                    isSyncEnabled: appSettings.isHealthKitEnabled,
                                     onDelete: { delete(ride) },
                                     onSync: { sync(ride: ride) }
                                 )

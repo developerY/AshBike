@@ -17,6 +17,14 @@ struct AshBikeApp: App {
     // The ModelContainer can be a simple property now
     private let modelContainer: ModelContainer
     
+    // --- 1. CREATE A STATE PROPERTY FOR APPSETTINGS ---
+    // Using @State for an @Observable class is the modern equivalent
+    // of @StateObject and ensures SwiftUI manages its lifecycle.
+    @State private var appSettings = AppSettings()
+    
+    @State private var healthKitService = HealthKitService()
+    @State private var rideSessionManager = RideSessionManager()
+    
     init() {
         let schema = Schema([
             BikeRide.self,
@@ -33,13 +41,13 @@ struct AshBikeApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }
-    
-    @State private var healthKitService = HealthKitService()
-    @State private var rideSessionManager = RideSessionManager()
+
 
     var body: some Scene {
         WindowGroup {
             MainTabView()
+                // --- 2. INJECT APPSETTINGS INTO THE ENVIRONMENT ---
+                .environment(appSettings)
                 .environment(healthKitService)
                 .environment(rideSessionManager)
                 // --- CHANGED: Inject the observable RideDataManager class ---
