@@ -194,7 +194,13 @@ private struct NeedleView: View {
     let speed: Double
     let maxSpeed: Double
     
-    private var angle: Angle { .degrees(135) + .degrees(270 * (speed / maxSpeed)) }
+    // ** THE FIX IS HERE **
+    // The speed is now clamped to the maxSpeed, preventing the needle from
+    // spinning past the end of the dial.
+    private var angle: Angle {
+        let clampedSpeed = min(speed, maxSpeed)
+        return .degrees(135) + .degrees(270 * (clampedSpeed / maxSpeed))
+    }
 
     var body: some View {
         ZStack {
