@@ -22,7 +22,15 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     var avgSpeed: Double = 0
     var maxSpeed: Double = 0
     var calories: Int = 0
-    var routeCoordinates: [CLLocationCoordinate2D] = []
+    
+    // --- MODIFIED ---
+    // Now stores the full CLLocation object to preserve the timestamp of each point.
+    var route: [CLLocation] = []
+    
+    // Expose just the coordinates for the map view.
+    var routeCoordinates: [CLLocationCoordinate2D] {
+        route.map { $0.coordinate }
+    }
     
     // State management
     var isRecording = false
@@ -33,7 +41,6 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     private var userWeight: Double = 75 // A default weight in kg.
 
     private let locationManager = CLLocationManager()
-    private var lastLocation: CLLocation?
     private var startDate: Date?
     private var timer: Timer?
 
@@ -57,14 +64,7 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         // Store the user's weight for the new ride
         self.userWeight = userWeightKg
         
-        // Reset all recording metrics for a new ride
-        distance = 0
-        duration = 0
-        avgSpeed = 0
-        maxSpeed = 0
-        calories = 0
-        routeCoordinates.removeAll()
-        lastLocation = nil
+        resetRecordingMetrics()
         
         startDate = Date()
         startTimer()
@@ -93,7 +93,6 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         return ride
     }
     
-    // Resets only the properties related to a recorded ride
     private func resetRecordingMetrics() {
         distance = 0
         duration = 0
@@ -101,12 +100,17 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         maxSpeed = 0
         calories = 0
         startDate = nil
-        lastLocation = nil
-        routeCoordinates.removeAll()
+        route.removeAll()
     }
 
     private func generateBikeRide() -> BikeRide? {
         guard let start = startDate, duration > 0 else { return nil }
+
+        // --- MODIFIED ---
+        // Creates RideLocation objects using the preserved timestamp from each point in the route.
+        let rideLocations = route.map {
+            RideLocation(timestamp: $0.timestamp, lat: $0.coordinate.latitude, lon: $0.coordinate.longitude, speed: $0.speed)
+        }
 
         return BikeRide(
             startTime: start,
@@ -114,12 +118,10 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
             totalDistance: distance,
             avgSpeed: avgSpeed,
             maxSpeed: maxSpeed,
-            elevationGain: 0,
+            elevationGain: 0, // Placeholder
             calories: calories,
             notes: nil,
-            locations: routeCoordinates.map {
-                RideLocation(timestamp: Date(), lat: $0.latitude, lon: $0.longitude)
-            }
+            locations: rideLocations
         )
     }
 
@@ -159,11 +161,11 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         // Only update recording metrics if a ride is in progress
         if isRecording {
             maxSpeed = max(maxSpeed, currentSpeed)
-            if let last = lastLocation {
+            if let last = route.last {
                 distance += newLoc.distance(from: last)
             }
-            lastLocation = newLoc
-            routeCoordinates.append(newLoc.coordinate)
+            // Append the full CLLocation object.
+            route.append(newLoc)
         }
     }
     
