@@ -8,14 +8,6 @@ import SwiftUI
 import SwiftData
 import MapKit
 
-// A simple struct to hold alert information.
-// Conforming to Identifiable lets us use it with the .alert(item:) modifier.
-struct AppAlert: Identifiable {
-    let id = UUID()
-    let title: String
-    let message: String
-}
-
 struct RideListView: View {
     @Query(sort: \BikeRide.startTime, order: .reverse)
     private var rides: [BikeRide]

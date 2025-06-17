@@ -14,6 +14,9 @@ struct HomeView: View {
     @Environment(RideSessionManager.self) private var session
     @Environment(RideDataManager.self) private var rideDataManager
     
+    // --- ADD THIS STATE FOR ALERTS ---
+    @State private var appAlert: AppAlert?
+    
     // --- ADDED ---
     // A query to fetch the user's profile from SwiftData.
     @Query private var profiles: [UserProfile]
@@ -111,20 +114,22 @@ struct HomeView: View {
 
                 // --- MODIFIED ---
                 // The Stop button's action now runs an async task to handle saving.
+                // --- MODIFY THE STOP BUTTON'S ACTION ---
                 Button(action: {
                     Task {
                         if let ride = session.stop() {
                             do {
                                 try await rideDataManager.save(ride: ride)
+                                // Optionally show a success alert
+                                // appAlert = AppAlert(title: "Ride Saved", message: "Your ride was successfully saved.")
                             } catch {
-                                // Optional: Add user-facing error handling
-                                print("Failed to save ride: \(error.localizedDescription)")
+                                // Show an error alert on failure
+                                appAlert = AppAlert(title: "Save Failed", message: "Your ride could not be saved. Please try again.")
                             }
                         }
                     }
                 }) {
-                    Image(systemName: "stop.fill")
-                        .font(.largeTitle)
+                    Image(systemName: "stop.fill")                        .font(.largeTitle)
                         .frame(width: 60, height: 60)
                 }
                 .buttonStyle(.borderedProminent)
@@ -151,6 +156,14 @@ struct HomeView: View {
             // This modifier makes the sheet's background transparent,
             // preventing the view behind it from dimming.
             .presentationBackground(.clear)
+        }
+        // --- ADD THIS MODIFIER TO THE END OF THE VIEW ---
+        .alert(item: $appAlert) { alert in
+            Alert(
+                title: Text(alert.title),
+                message: Text(alert.message),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
 

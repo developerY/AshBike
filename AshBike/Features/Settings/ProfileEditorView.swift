@@ -11,6 +11,9 @@ struct ProfileEditorView: View {
     @Binding var isEditing: Bool
     
     @Environment(\.modelContext) private var context
+    
+    // --- ADD STATE FOR THE ALERT ---
+    @State private var appAlert: AppAlert?
 
     var body: some View {
         VStack {
@@ -31,13 +34,26 @@ struct ProfileEditorView: View {
                     isEditing = false
                 }
                 Spacer()
+                // --- MODIFY THE SAVE BUTTON'S ACTION ---
                 Button("Save") {
-                    try? context.save()
-                    isEditing = false
+                    do {
+                        try context.save()
+                        isEditing = false
+                    } catch {
+                        appAlert = AppAlert(title: "Save Failed", message: "Your profile could not be saved. Please try again.")
+                    }
                 }
                 .buttonStyle(.borderedProminent)
             }
             .padding(.top)
+        }
+        // --- ADD THIS MODIFIER TO THE VSTACK ---
+        .alert(item: $appAlert) { alert in
+            Alert(
+                title: Text(alert.title),
+                message: Text(alert.message),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
 }
