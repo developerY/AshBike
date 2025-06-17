@@ -15,10 +15,16 @@ struct SettingsView: View {
     
     @Environment(RideDataManager.self) private var rideDataManager
     
+    // --- THIS IS THE FIX ---
+    // Change @State to @Environment to receive the shared instance
+    // instead of creating a new one.
+    @Environment(AppSettings.self) private var appSettings
+    // @State private var appSettings = AppSettings()
+
+    
     // --- MODIFIED ---
     // Services are now correctly received from the environment.
     @Environment(HealthKitService.self) private var healthKitService
-    @State private var appSettings = AppSettings()
 
     // This determines if AshBike-specific hardware has been detected.
     @State private var isAshBikeHardwareDetected = true
