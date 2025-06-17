@@ -103,6 +103,9 @@ struct RideDetailView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(role: .destructive) {
                     modelContext.delete(ride)
+                    // ** THE FIX IS HERE: **
+                    // Explicitly save the context after deleting.
+                    try? modelContext.save()
                 } label: {
                     Image(systemName: "trash")
                 }
@@ -143,4 +146,3 @@ extension Optional where Wrapped == String {
     }
     .modelContainer(container)
 }
-
