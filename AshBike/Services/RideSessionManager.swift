@@ -42,15 +42,19 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     // The hardcoded weight is removed and replaced with a private property
     // that will be set when a ride starts.
     private var userWeight: Double = 75 // A default weight in kg.
+    
+    // --- 1. DEFINE PROPERTIES TO HOLD THE DEPENDENCIES ---
+    // This requires access to the HealthKitService from the environment
+    private let healthKitService: HealthKitService
+    private let appSettings: AppSettings
 
     private let locationManager = CLLocationManager()
     private var startDate: Date?
     private var timer: Timer?
     
-    // This requires access to the HealthKitService from the environment
-    private var healthKitService = HealthKitService()
-
-    override init() {
+    init(healthKitService: HealthKitService, appSettings: AppSettings) {
+        self.healthKitService = healthKitService
+        self.appSettings = appSettings
         super.init()
         locationManager.delegate = self
         locationManager.activityType = .fitness
@@ -65,10 +69,11 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     // --- MODIFIED ---
     // The start method now accepts the user's weight.
     // --- MODIFY THE START AND STOP METHODS ---
+    // --- 3. MODIFY THE START METHOD TO CHECK THE TOGGLE STATE ---
     func start(userWeightKg: Double) {
         guard !isRecording else { return }
         
-        // Store the user's weight for the new ride
+        // ... (reset metrics, start timer, etc.) ...
         self.userWeight = userWeightKg
         
         resetRecordingMetrics()
@@ -76,10 +81,13 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         startDate = Date()
         startTimer()
         isRecording = true
-
-        // Start observing heart rate
-        healthKitService.startObservingHeartRate { [weak self] newHeartRate in
-            self?.heartRate = newHeartRate
+        
+        // --- THIS IS THE CRITICAL CHECK ---
+        // Only start observing heart rate if the feature is enabled in settings.
+        if appSettings.isHealthKitEnabled {
+            healthKitService.startObservingHeartRate { [weak self] newHeartRate in
+                self?.heartRate = newHeartRate
+            }
         }
     }
     

@@ -17,13 +17,19 @@ struct AshBikeApp: App {
     // The ModelContainer can be a simple property now
     private let modelContainer: ModelContainer
     
+    // --- 1. MAKE SERVICES AVAILABLE TO THE INIT() ---
+    private let appSettings: AppSettings
+    private let healthKitService: HealthKitService
+    private let rideSessionManager: RideSessionManager
+    
+    
     // --- 1. CREATE A STATE PROPERTY FOR APPSETTINGS ---
     // Using @State for an @Observable class is the modern equivalent
     // of @StateObject and ensures SwiftUI manages its lifecycle.
-    @State private var appSettings = AppSettings()
+    // @State private var appSettings = AppSettings()
     
-    @State private var healthKitService = HealthKitService()
-    @State private var rideSessionManager = RideSessionManager()
+    // @State private var healthKitService = HealthKitService()
+    // @State private var rideSessionManager = RideSessionManager()
     
     init() {
         let schema = Schema([
@@ -31,12 +37,22 @@ struct AshBikeApp: App {
             UserProfile.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        
+        // These services are self-contained
+        self.appSettings = AppSettings()
+        self.healthKitService = HealthKitService()
 
         do {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
             self.modelContainer = container
-            // Initialize the RideDataManager with the container
             self.rideDataManager = RideDataManager(modelContainer: container)
+            
+            // --- 3. INJECT DEPENDENCIES INTO RIDESESSIONMANAGER ---
+            self.rideSessionManager = RideSessionManager(
+                healthKitService: self.healthKitService,
+                appSettings: self.appSettings
+            )
+            
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
