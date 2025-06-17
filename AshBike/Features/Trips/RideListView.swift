@@ -8,6 +8,14 @@ import SwiftUI
 import SwiftData
 import MapKit
 
+// A simple struct to hold alert information.
+// Conforming to Identifiable lets us use it with the .alert(item:) modifier.
+struct AppAlert: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
+}
+
 struct RideListView: View {
     @Query(sort: \BikeRide.startTime, order: .reverse)
     private var rides: [BikeRide]
@@ -18,11 +26,9 @@ struct RideListView: View {
     @Environment(HealthKitService.self) private var healthKitService
     @Environment(RideDataManager.self) private var rideDataManager
 
-    // State for the UI
+    // A single state variable to drive all alerts in this view.
+    @State private var appAlert: AppAlert?
     @State private var syncedRideIDs: Set<UUID> = []
-    @State private var showingAlert = false
-    @State private var alertTitle = ""
-    @State private var alertMessage = ""
 
     var body: some View {
         NavigationStack {
@@ -60,9 +66,7 @@ struct RideListView: View {
                                 try await rideDataManager.deleteAllRides()
                             } catch {
                                 print("Failed to delete all rides: \(error)")
-                                alertTitle = "Error"
-                                alertMessage = "Could not delete all rides."
-                                showingAlert = true
+                                appAlert = AppAlert(title: "Error", message: "Could not delete all rides.")
                             }
                         }
                     }
@@ -70,10 +74,13 @@ struct RideListView: View {
                 }
             }
             .onAppear(perform: checkAllRidesSyncStatus)
-            .alert(alertTitle, isPresented: $showingAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(alertMessage)
+            // The .alert modifier now binds to the optional AppAlert item.
+            .alert(item: $appAlert) { alert in
+                Alert(
+                    title: Text(alert.title),
+                    message: Text(alert.message),
+                    dismissButton: .default(Text("OK"))
+                )
             }
             // Refresh sync status when the list changes
             .onChange(of: rides) {
@@ -89,7 +96,7 @@ struct RideListView: View {
             // This line ensures the change is saved and the UI updates reliably.
             try modelContext.save()
         } catch {
-            // Handle potential errors during the save operation.
+            appAlert = AppAlert(title: "Deletion Failed", message: "The ride could not be deleted. Please try again.")
             print("Failed to save context after deleting ride: \(error)")
         }
     }
@@ -111,16 +118,14 @@ struct RideListView: View {
             if success {
                 // Add the ID to our state set, which will automatically update the view
                 syncedRideIDs.insert(ride.id)
-                self.alertTitle = "Success"
-                self.alertMessage = "Your ride has been successfully synced to Apple Health."
+                appAlert = AppAlert(title: "Success", message: "Your ride has been successfully synced to Apple Health.")
             } else {
-                self.alertTitle = "Sync Failed"
-                self.alertMessage = "Could not sync ride to Apple Health.\n\(error?.localizedDescription ?? "")"
+                appAlert = AppAlert(title: "Sync Failed", message: "Could not sync ride to Apple Health.\n\(error?.localizedDescription ?? "")")
             }
-            self.showingAlert = true
         }
     }
 }
+
 // =================================================================
 // MARK: – Supporting Types & Previews
 // =================================================================
