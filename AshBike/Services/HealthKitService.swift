@@ -7,7 +7,7 @@
 import Foundation
 import HealthKit
 import CoreLocation
-import Observation // Add this import
+import Observation
 
 
 @Observable
@@ -37,86 +37,114 @@ class HealthKitService {
         healthStore.requestAuthorization(toShare: writeDataTypes, read: readDataTypes, completion: completion)
     }
     
-    // NEW: Function to check sync status
+    // This function is no longer the primary method, but we can leave it.
     func checkIfRideIsSynced(ride: BikeRide, completion: @escaping (Bool) -> Void) {
-        let predicate = HKQuery.predicateForObjects(withMetadataKey: rideIdentifierKey, allowedValues: [ride.id.uuidString])
-        let query = HKSampleQuery(sampleType: .workoutType(), predicate: predicate, limit: 1, sortDescriptors: nil) { (query, samples, error) in
+        // Note: This would also need to be updated to the new query logic if used.
+        fetchSyncStatus(for: [ride]) { syncedIDs in
+            completion(!syncedIDs.isEmpty)
+        }
+    }
+    
+    // ** FIX #1: THE QUERY **
+    // The query now targets the specific sample type where we store the metadata.
+    func fetchSyncStatus(for rides: [BikeRide], completion: @escaping (Set<UUID>) -> Void) {
+        let rideIDs = rides.map { $0.id.uuidString }
+        guard !rideIDs.isEmpty else {
+            completion([])
+            return
+        }
+        
+        let predicate = HKQuery.predicateForObjects(withMetadataKey: rideIdentifierKey, allowedValues: rideIDs)
+        
+        // Query for the Active Energy samples that contain our metadata.
+        let query = HKSampleQuery(
+            sampleType: HKSampleType.quantityType(forIdentifier: .activeEnergyBurned)!,
+            predicate: predicate,
+            limit: HKObjectQueryNoLimit,
+            sortDescriptors: nil
+        ) { (query, samples, error) in
+            guard let syncedSamples = samples, error == nil else {
+                DispatchQueue.main.async { completion([]) }
+                return
+            }
+            
+            // Extract the original UUIDs from the sample metadata
+            let syncedIDs = syncedSamples.compactMap { sample -> UUID? in
+                if let idString = sample.metadata?[self.rideIdentifierKey] as? String {
+                    return UUID(uuidString: idString)
+                }
+                return nil
+            }
+            
             DispatchQueue.main.async {
-                completion(samples?.first != nil)
+                completion(Set(syncedIDs))
             }
         }
         healthStore.execute(query)
     }
-    
-    // NEW: More efficient batch query for checking sync status
-        func fetchSyncStatus(for rides: [BikeRide], completion: @escaping (Set<UUID>) -> Void) {
-            let rideIDs = rides.map { $0.id.uuidString }
-            guard !rideIDs.isEmpty else {
-                completion([])
-                return
-            }
-            
-            let predicate = HKQuery.predicateForObjects(withMetadataKey: rideIdentifierKey, allowedValues: rideIDs)
-            
-            let query = HKSampleQuery(sampleType: .workoutType(), predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { (query, samples, error) in
-                guard let syncedWorkouts = samples as? [HKWorkout], error == nil else {
-                    DispatchQueue.main.async { completion([]) }
-                    return
-                }
-                
-                // Extract the original UUIDs from the workout metadata
-                let syncedIDs = syncedWorkouts.compactMap { workout -> UUID? in
-                    if let idString = workout.metadata?[self.rideIdentifierKey] as? String {
-                        return UUID(uuidString: idString)
-                    }
-                    return nil
-                }
-                
-                DispatchQueue.main.async {
-                    completion(Set(syncedIDs))
-                }
-            }
-            healthStore.execute(query)
-        }
 
+    // ** FIX #2: THE SAVE **
+    // The metadata is now attached to the energy sample.
     func save(bikeRide: BikeRide, completion: @escaping (Bool, Error?) -> Void) {
         let configuration = HKWorkoutConfiguration()
         configuration.activityType = .cycling
         configuration.locationType = .outdoor
-        
+
         let builder = HKWorkoutBuilder(healthStore: healthStore, configuration: configuration, device: .local())
         let routeBuilder = HKWorkoutRouteBuilder(healthStore: healthStore, device: nil)
-        
+
         builder.beginCollection(withStart: bikeRide.startTime) { success, error in
             guard success else { completion(false, error); return }
         }
-        
+
         let locations = bikeRide.locations.map { CLLocation(latitude: $0.latitude, longitude: $0.longitude) }
-        routeBuilder.insertRouteData(locations) { success, error in
-            if !success { print("Error saving workout route: \(error?.localizedDescription ?? "Unknown")") }
+        if !locations.isEmpty {
+            routeBuilder.insertRouteData(locations) { success, error in
+                if !success { print("Error saving workout route: \(error?.localizedDescription ?? "Unknown")") }
+            }
         }
-        
+
+        // Attach our unique ride ID to the metadata of a sample that will always exist.
+        let metadata: [String: Any] = [self.rideIdentifierKey: bikeRide.id.uuidString]
+
         let totalEnergyBurned = HKQuantity(unit: .kilocalorie(), doubleValue: Double(bikeRide.calories))
-        let energySample = HKCumulativeQuantitySample(type: HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!, quantity: totalEnergyBurned, start: bikeRide.startTime, end: bikeRide.endTime)
-        
+        let energySample = HKCumulativeQuantitySample(
+            type: HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
+            quantity: totalEnergyBurned,
+            start: bikeRide.startTime,
+            end: bikeRide.endTime,
+            metadata: metadata // Metadata is attached here
+        )
+
         let totalDistance = HKQuantity(unit: .meter(), doubleValue: bikeRide.totalDistance)
-        let distanceSample = HKCumulativeQuantitySample(type: HKQuantityType.quantityType(forIdentifier: .distanceCycling)!, quantity: totalDistance, start: bikeRide.startTime, end: bikeRide.endTime)
-        
+        let distanceSample = HKCumulativeQuantitySample(
+            type: HKQuantityType.quantityType(forIdentifier: .distanceCycling)!,
+            quantity: totalDistance,
+            start: bikeRide.startTime,
+            end: bikeRide.endTime
+        )
+
         builder.add([energySample, distanceSample]) { success, error in
             guard success else { completion(false, error); return }
         }
-        
+
         builder.endCollection(withEnd: bikeRide.endTime) { success, error in
             guard success else { completion(false, error); return }
-            
-            // Add our unique ride ID to the workout metadata
-            let metadata = [self.rideIdentifierKey: bikeRide.id.uuidString]
-            
+
             builder.finishWorkout(completion: { (workout, error) in
-                guard let workout = workout else { completion(false, error); return }
-                
-                routeBuilder.finishRoute(with: workout, metadata: metadata) { (route, error) in
-                    completion(error == nil, error)
+                guard let workout = workout else {
+                    completion(false, error)
+                    return
+                }
+
+                if !locations.isEmpty {
+                    // The route doesn't need the metadata, as it's now on the energy sample.
+                    routeBuilder.finishRoute(with: workout, metadata: nil) { (route, error) in
+                        completion(error == nil, error)
+                    }
+                } else {
+                    // If there's no route, the workout is saved successfully.
+                    completion(true, nil)
                 }
             })
         }
