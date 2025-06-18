@@ -19,14 +19,8 @@ struct SettingsView: View {
     // Change @State to @Environment to receive the shared instance
     // instead of creating a new one.
     // This part is now CORRECT. You are successfully receiving the shared object.
-    @Environment(AppSettings.self) private var appSettings    // @State private var appSettings = AppSettings()
-
-    private var appSettingsHealthKitBinding: Binding<Bool> {
-        Binding(
-            get: { appSettings.isHealthKitEnabled },
-            set: { appSettings.isHealthKitEnabled = $0 }
-        )
-    }
+    // @State private var appSettings = AppSettings()
+    @Environment(AppSettings.self) private var appSettings
     
     // --- MODIFIED ---
     // Services are now correctly received from the environment.
@@ -75,20 +69,32 @@ struct SettingsView: View {
                 }
 
                 // --- GENERAL CONNECTIVITY (For all users) ---
-                                Section {
-                                    DisclosureGroup(isExpanded: $connectivityExpanded) {
-                                        // This Toggle will now compile correctly because it uses
-                                        // the @Bindable appSettings variable created above.
-                                        Toggle(isOn: appSettingsHealthKitBinding) {
-                                            Label("HealthKit Sync", systemImage: "heart.text.square")
-                                        }
-                                        .onChange(of: appSettings.isHealthKitEnabled) { _, isEnabled in
-                                            handleHealthKitToggle(isEnabled: isEnabled)
-                                        }
-                                    } label: {
-                                        Label("App Connectivity", systemImage: "dot.radiowaves.left.and.right")
-                                    }
-                                }
+                Section {
+                    DisclosureGroup(isExpanded: $connectivityExpanded) {
+                        
+                        // --- THIS IS THE MANUAL BINDING FIX ---
+                        // We will create the Binding<Bool> for the Toggle manually
+                        // to bypass the compiler error with the '$' syntax.
+                        Toggle(isOn: Binding(
+                            get: {
+                                // How the Toggle gets its value
+                                appSettings.isHealthKitEnabled
+                            },
+                            set: { isEnabled in
+                                // What the Toggle does when its value changes
+                                appSettings.isHealthKitEnabled = isEnabled
+                                handleHealthKitToggle(isEnabled: isEnabled)
+                            }
+                        )) {
+                            Label("HealthKit Sync", systemImage: "heart.text.square")
+                        }
+                        // The .onChange modifier is no longer needed as the logic
+                        // is now handled inside the 'set' block of the binding.
+                        
+                    } label: {
+                        Label("App Connectivity", systemImage: "dot.radiowaves.left.and.right")
+                    }
+                }
                 
                 // --- ASHBIKE HARDWARE SECTION (Conditional & Disabled for Beta) ---
                 if isAshBikeHardwareDetected {
