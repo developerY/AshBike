@@ -18,8 +18,8 @@ struct SettingsView: View {
     // --- THIS IS THE FIX ---
     // Change @State to @Environment to receive the shared instance
     // instead of creating a new one.
-    @Environment(AppSettings.self) private var appSettings
-    // @State private var appSettings = AppSettings()
+    // This part is now CORRECT. You are successfully receiving the shared object.
+    @Environment(AppSettings.self) private var appSettings    // @State private var appSettings = AppSettings()
 
     
     // --- MODIFIED ---
@@ -71,6 +71,8 @@ struct SettingsView: View {
                 // --- GENERAL CONNECTIVITY (For all users) ---
                 Section {
                     DisclosureGroup(isExpanded: $connectivityExpanded) {
+                        // This binding will now work correctly because it uses
+                        // the @Bindable variable we created above.
                         Toggle(isOn: $appSettings.isHealthKitEnabled) {
                             Label("HealthKit Sync", systemImage: "heart.text.square")
                         }
