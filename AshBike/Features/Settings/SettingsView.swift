@@ -21,6 +21,12 @@ struct SettingsView: View {
     // This part is now CORRECT. You are successfully receiving the shared object.
     @Environment(AppSettings.self) private var appSettings    // @State private var appSettings = AppSettings()
 
+    private var appSettingsHealthKitBinding: Binding<Bool> {
+        Binding(
+            get: { appSettings.isHealthKitEnabled },
+            set: { appSettings.isHealthKitEnabled = $0 }
+        )
+    }
     
     // --- MODIFIED ---
     // Services are now correctly received from the environment.
@@ -69,20 +75,20 @@ struct SettingsView: View {
                 }
 
                 // --- GENERAL CONNECTIVITY (For all users) ---
-                Section {
-                    DisclosureGroup(isExpanded: $connectivityExpanded) {
-                        // This binding will now work correctly because it uses
-                        // the @Bindable variable we created above.
-                        Toggle(isOn: $appSettings.isHealthKitEnabled) {
-                            Label("HealthKit Sync", systemImage: "heart.text.square")
-                        }
-                        .onChange(of: appSettings.isHealthKitEnabled) { _, isEnabled in
-                            handleHealthKitToggle(isEnabled: isEnabled)
-                        }
-                    } label: {
-                        Label("App Connectivity", systemImage: "dot.radiowaves.left.and.right")
-                    }
-                }
+                                Section {
+                                    DisclosureGroup(isExpanded: $connectivityExpanded) {
+                                        // This Toggle will now compile correctly because it uses
+                                        // the @Bindable appSettings variable created above.
+                                        Toggle(isOn: appSettingsHealthKitBinding) {
+                                            Label("HealthKit Sync", systemImage: "heart.text.square")
+                                        }
+                                        .onChange(of: appSettings.isHealthKitEnabled) { _, isEnabled in
+                                            handleHealthKitToggle(isEnabled: isEnabled)
+                                        }
+                                    } label: {
+                                        Label("App Connectivity", systemImage: "dot.radiowaves.left.and.right")
+                                    }
+                                }
                 
                 // --- ASHBIKE HARDWARE SECTION (Conditional & Disabled for Beta) ---
                 if isAshBikeHardwareDetected {
@@ -190,10 +196,12 @@ struct SettingsView: View {
 #Preview {
     let config = ModelConfiguration(schema: Schema([UserProfile.self, BikeRide.self]), isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: Schema([UserProfile.self]), configurations: [config])
+    let appSettings = AppSettings()
     // We no longer need to insert a profile for the preview,
     // as the view's .onAppear will handle it.
     
     return SettingsView()
         .modelContainer(container)
         .environment(HealthKitService()) // Add service to preview environment
+        .environment(appSettings) // Add AppSettings to preview
 }
