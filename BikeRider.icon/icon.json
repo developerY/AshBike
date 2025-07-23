@@ -1,0 +1,153 @@
+{
+  "fill" : {
+    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "fill" : "automatic",
+          "glass" : true,
+          "image-name" : "body.png",
+          "name" : "body",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              22.515625,
+              83.5234375
+            ]
+          }
+        },
+        {
+          "image-name" : "Chest.png",
+          "name" : "Chest",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -49.4765625,
+              -152.6875
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    },
+    {
+      "layers" : [
+        {
+          "image-name" : "hair.png",
+          "name" : "hair",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -16.0546875,
+              -317.984375
+            ]
+          }
+        },
+        {
+          "glass" : true,
+          "image-name" : "face.png",
+          "name" : "face",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              232.5390625,
+              -222.625
+            ]
+          }
+        },
+        {
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "hat.png",
+          "name" : "hat",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              242.703125,
+              -325.15625
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    },
+    {
+      "layers" : [
+        {
+          "image-name" : "fork.png",
+          "name" : "fork",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              88.2265625,
+              193.9296875
+            ]
+          }
+        },
+        {
+          "image-name" : "bike.png",
+          "name" : "bike",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -263.78125,
+              178.296875
+            ]
+          }
+        },
+        {
+          "image-name" : "backtire.png",
+          "name" : "backtire",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -440.953125,
+              335.8359375
+            ]
+          }
+        },
+        {
+          "image-name" : "Tire.png",
+          "name" : "Tire",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              313.359375,
+              307.546875
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
