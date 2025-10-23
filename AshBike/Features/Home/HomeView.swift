@@ -145,23 +145,11 @@ struct HomeView: View {
             .background(.bar)
         }
         .sheet(isPresented: $isShowingMapSheet) {
-            VStack {
-                Capsule()
-                    .fill(Color.secondary)
-                    .frame(width: 40, height: 5)
-                    .padding(.top, 8)
-                
-                Text("Live Route")
-                    .font(.headline)
-                    .padding()
-                
-                RouteMapView(route: session.routeCoordinates)
-            }
-            .presentationDetents([.medium, .large])
-            // ** THIS IS THE FIX **
-            // This modifier makes the sheet's background transparent,
-            // preventing the view behind it from dimming.
-            .presentationBackground(.clear)
+            LiveRouteSheetView(route: session.routeCoordinates)
+                .equatable()
+                .transaction { $0.disablesAnimations = true }
+                .presentationDetents([.medium, .large])
+                .presentationBackground(.clear)
         }
         // --- ADD THIS MODIFIER TO THE END OF THE VIEW ---
         .alert(item: $appAlert) { alert in
@@ -210,6 +198,33 @@ private struct LiveMetricsView: View, Equatable {
             }
         }
         .padding(.top, 8)
+    }
+}
+
+private struct LiveRouteSheetView: View, Equatable {
+    let route: [CLLocationCoordinate2D]
+
+    // Equatable conformance: compare lightweight snapshot to reduce recomputations
+    static func == (lhs: LiveRouteSheetView, rhs: LiveRouteSheetView) -> Bool {
+        guard lhs.route.count == rhs.route.count else { return false }
+        let l = lhs.route.last
+        let r = rhs.route.last
+        return l?.latitude == r?.latitude && l?.longitude == r?.longitude
+    }
+
+    var body: some View {
+        VStack {
+            Capsule()
+                .fill(Color.secondary)
+                .frame(width: 40, height: 5)
+                .padding(.top, 8)
+            
+            Text("Live Route")
+                .font(.headline)
+                .padding()
+            
+            RouteMapView(route: route)
+        }
     }
 }
 
