@@ -441,7 +441,7 @@
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "We need this to save the bike ride info";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need this to save the bike ride info";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We need this to save the bike ride info";
-				INFOPLIST_KEY_NSHomeKitUsageDescription = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_NSHomeKitUsageDescription = 0.0.1;
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Need for speed";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Need this for speed";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Need this for speed";
@@ -493,7 +493,7 @@
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "We need this to save the bike ride info";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need this to save the bike ride info";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We need this to save the bike ride info";
-				INFOPLIST_KEY_NSHomeKitUsageDescription = "$(MARKETING_VERSION)";
+				INFOPLIST_KEY_NSHomeKitUsageDescription = 0.0.1;
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Need for speed";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "Need this for speed";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Need this for speed";

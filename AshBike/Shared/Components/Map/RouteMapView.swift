@@ -21,11 +21,12 @@ struct RouteMapView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: MKMapView, context: Context) {
-        // Remove any old overlay
-        uiView.removeOverlays(uiView.overlays)
-
-        // Add fresh polyline
+        // Maintain a single polyline overlay to avoid re-adding everything on each update
         let poly = MKPolyline(coordinates: route, count: route.count)
+        if let existing = context.coordinator.polyline {
+            uiView.removeOverlay(existing)
+        }
+        context.coordinator.polyline = poly
         uiView.addOverlay(poly)
 
         // Center on the latest point
@@ -40,6 +41,7 @@ struct RouteMapView: UIViewRepresentable {
 
     class Coordinator: NSObject, MKMapViewDelegate {
         let parent: RouteMapView
+        var polyline: MKPolyline?
         init(_ parent: RouteMapView) { self.parent = parent }
 
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {

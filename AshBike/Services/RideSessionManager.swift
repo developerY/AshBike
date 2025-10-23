@@ -187,11 +187,18 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         // Only update recording metrics if a ride is in progress
         if isRecording {
             maxSpeed = max(maxSpeed, currentSpeed)
+
             if let last = route.last {
-                distance += newLoc.distance(from: last)
+                let delta = newLoc.distance(from: last)
+                // Throttle: only append and accumulate distance when moved at least 5 meters
+                if delta >= 5 {
+                    distance += delta
+                    route.append(newLoc)
+                }
+            } else {
+                // First point of the recording
+                route.append(newLoc)
             }
-            // Append the full CLLocation object.
-            route.append(newLoc)
         }
     }
     
