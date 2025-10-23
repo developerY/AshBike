@@ -28,13 +28,20 @@ struct HomeView: View {
     @State private var expandedSection: ExpandedSection? = .metrics
     @State private var isShowingMapSheet = false
 
-    // --- MODIFIED ---
-    // The formatter is now a static constant for better performance.
-    private static let durationFormatter: DateComponentsFormatter = {
-        let fmt = DateComponentsFormatter()
-        fmt.allowedUnits = [.hour, .minute, .second]
-        fmt.zeroFormattingBehavior = .pad
-        return fmt
+    // --- UPDATED ---
+    // Use two immutable static formatters to avoid mutating shared state.
+    private static let hmsFormatter: DateComponentsFormatter = {
+        let f = DateComponentsFormatter()
+        f.allowedUnits = [.hour, .minute, .second]
+        f.zeroFormattingBehavior = .pad
+        return f
+    }()
+
+    private static let msFormatter: DateComponentsFormatter = {
+        let f = DateComponentsFormatter()
+        f.allowedUnits = [.minute, .second]
+        f.zeroFormattingBehavior = .pad
+        return f
     }()
 
     var body: some View {
@@ -172,11 +179,8 @@ struct HomeView: View {
     }
 
     private func formattedDuration(_ sec: TimeInterval) -> String {
-        // Use the static formatter. Adjust units based on duration.
-        HomeView.durationFormatter.allowedUnits = sec >= 3600
-            ? [.hour, .minute, .second]
-            : [.minute, .second]
-        return HomeView.durationFormatter.string(from: sec) ?? "00:00"
+        let fmt = sec >= 3600 ? HomeView.hmsFormatter : HomeView.msFormatter
+        return fmt.string(from: sec) ?? "00:00"
     }
 }
 
@@ -209,3 +213,4 @@ struct HomeView_Previews: PreviewProvider {
             .modelContainer(modelContainer)
     }
 }
+
