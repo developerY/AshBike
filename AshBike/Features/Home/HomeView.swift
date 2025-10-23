@@ -67,22 +67,15 @@ struct HomeView: View {
                             set: { isExpanding in expandedSection = isExpanding ? .metrics : nil }
                         )
                     ) {
-                        VStack {
-                            HStack(spacing: 12) {
-                                MetricCard(label: "Distance", value: String(format: "%.1f km", session.distance / 1000))
-                                MetricCard(label: "Duration", value: formattedDuration(session.duration))
-                                MetricCard(label: "Avg Speed", value: String(format: "%.1f km/h", session.avgSpeed * 3.6))
-                            }
-                            HStack(spacing: 12) {
-                                MetricCard(
-                                    label: "Heart Rate",
-                                    // Show a value only if it's greater than zero
-                                    value: session.heartRate > 0 ? String(format: "%.0f bpm", session.heartRate) : "-- bpm"
-                                )
-                                MetricCard(label: "Calories", value: "\(session.calories) kcal")
-                            }
-                        }
-                        .padding(.top, 8)
+                        LiveMetricsView(
+                            distance: session.distance,
+                            durationText: formattedDuration(session.duration),
+                            avgSpeed: session.avgSpeed,
+                            heartRate: session.heartRate,
+                            calories: session.calories
+                        )
+                        .equatable()
+                        .transaction { $0.disablesAnimations = true }
                     }
                     .padding(.horizontal)
 
@@ -181,6 +174,40 @@ struct HomeView: View {
     private func formattedDuration(_ sec: TimeInterval) -> String {
         let fmt = sec >= 3600 ? HomeView.hmsFormatter : HomeView.msFormatter
         return fmt.string(from: sec) ?? "00:00"
+    }
+}
+
+private struct LiveMetricsView: View, Equatable {
+    let distance: Double
+    let durationText: String
+    let avgSpeed: Double
+    let heartRate: Double
+    let calories: Int
+
+    static func == (lhs: LiveMetricsView, rhs: LiveMetricsView) -> Bool {
+        lhs.distance == rhs.distance &&
+        lhs.durationText == rhs.durationText &&
+        lhs.avgSpeed == rhs.avgSpeed &&
+        lhs.heartRate == rhs.heartRate &&
+        lhs.calories == rhs.calories
+    }
+
+    var body: some View {
+        VStack {
+            HStack(spacing: 12) {
+                MetricCard(label: "Distance", value: String(format: "%.1f km", distance / 1000))
+                MetricCard(label: "Duration", value: durationText)
+                MetricCard(label: "Avg Speed", value: String(format: "%.1f km/h", avgSpeed * 3.6))
+            }
+            HStack(spacing: 12) {
+                MetricCard(
+                    label: "Heart Rate",
+                    value: heartRate > 0 ? String(format: "%.0f bpm", heartRate) : "-- bpm"
+                )
+                MetricCard(label: "Calories", value: "\(calories) kcal")
+            }
+        }
+        .padding(.top, 8)
     }
 }
 
