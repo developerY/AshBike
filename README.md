@@ -4,6 +4,7 @@
 **A native iOS 17+ cycling companion app**
 Built with Swift 6, SwiftUI, SwiftData, HealthKit, MapKit, ARKit & modern Apple frameworks.
 
+[Test Flight](https://testflight.apple.com/join/an8TYkQc)
 ---
 
 ## 🚴‍♀️ Overview
@@ -14,7 +15,7 @@ AshBike helps you track, review and sync your bike rides:
 - **Trip History**: browse, delete and sync past rides with HealthKit
 - **Ride Details**: map polyline, speed-color gradient, elevation chart, notes
 - **Settings & Services**: profile, HealthKit permissions, NFC/QR/BLE
-
+[Article](https://zoewave.medium.com/apple-x-os-26-25587ca4b46b)
 ---
 
 ## 📦 Requirements
