@@ -6,11 +6,17 @@
 //
 import SwiftUI
 
-struct GaugeView: View {
+struct GaugeView: View, Equatable {
     var speed: Double
     var heading: Double
     var maxSpeed: Double = 60
     var onMapButtonTapped: () -> Void // Action to show the map
+
+    static func == (lhs: GaugeView, rhs: GaugeView) -> Bool {
+        lhs.speed == rhs.speed &&
+        lhs.heading == rhs.heading &&
+        lhs.maxSpeed == rhs.maxSpeed
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -298,3 +304,4 @@ struct GaugeView_Previews: PreviewProvider {
             .previewLayout(.sizeThatFits)
     }
 }
+

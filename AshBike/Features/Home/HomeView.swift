@@ -56,6 +56,8 @@ struct HomeView: View {
                             isShowingMapSheet = true
                         }
                     )
+                    .equatable()
+                    .transaction { $0.disablesAnimations = true }
                     .frame(width: 300, height: 300)
                     .padding(.horizontal)
 
