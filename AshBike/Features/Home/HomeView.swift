@@ -212,6 +212,30 @@ private struct LiveRouteSheetView: View, Equatable {
         return l?.latitude == r?.latitude && l?.longitude == r?.longitude
     }
 
+    // Gating state
+    @State private var displayedRoute: [CLLocationCoordinate2D] = []
+    @State private var lastUpdate: Date = .distantPast
+
+    // Tuning knobs
+    private let minUpdateInterval: TimeInterval = 2.0 // seconds
+    private let minDistanceMeters: Double = 10.0 // meters
+
+    // 1. Define an Equatable struct to hold the values we want to observe.
+    private struct RouteSnapshot: Equatable {
+        let count: Int
+        let lastLat: CLLocationDegrees?
+        let lastLon: CLLocationDegrees?
+    }
+    
+    // 2. Create a computed property that builds this struct from the route.
+    private var routeSnapshot: RouteSnapshot {
+        RouteSnapshot(
+            count: route.count,
+            lastLat: route.last?.latitude,
+            lastLon: route.last?.longitude
+        )
+    }
+    
     var body: some View {
         VStack {
             Capsule()
@@ -223,8 +247,56 @@ private struct LiveRouteSheetView: View, Equatable {
                 .font(.headline)
                 .padding()
             
-            RouteMapView(route: route)
+            RouteMapView(route: displayedRoute)
         }
+        .onAppear {
+            displayedRoute = thinRoute(route, minDistanceMeters: minDistanceMeters)
+            lastUpdate = Date()
+        }
+        // --- THIS IS THE FIX ---
+        // 3. Observe the Equatable struct using the zero-parameter closure.
+        .onChange(of: routeSnapshot) {
+            let now = Date()
+            let timeOK = now.timeIntervalSince(lastUpdate) >= minUpdateInterval
+            let distOK = hasMovedEnough(from: displayedRoute.last, to: route.last, thresholdMeters: minDistanceMeters)
+            if timeOK || distOK {
+                displayedRoute = thinRoute(route, minDistanceMeters: minDistanceMeters)
+                lastUpdate = now
+            }
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func hasMovedEnough(from a: CLLocationCoordinate2D?, to b: CLLocationCoordinate2D?, thresholdMeters: Double) -> Bool {
+        guard let a = a, let b = b else { return true }
+        return haversineDistanceMeters(a, b) >= thresholdMeters
+    }
+
+    private func thinRoute(_ points: [CLLocationCoordinate2D], minDistanceMeters: Double) -> [CLLocationCoordinate2D] {
+        guard var last = points.first else { return [] }
+        var result: [CLLocationCoordinate2D] = [last]
+        for p in points.dropFirst() {
+            if haversineDistanceMeters(last, p) >= minDistanceMeters {
+                result.append(p)
+                last = p
+            }
+        }
+        return result
+    }
+
+    // Haversine distance in meters
+    private func haversineDistanceMeters(_ a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D) -> Double {
+        let R = 6371000.0 // Earth radius in meters
+        let dLat = (b.latitude - a.latitude) * .pi / 180
+        let dLon = (b.longitude - a.longitude) * .pi / 180
+        let lat1 = a.latitude * .pi / 180
+        let lat2 = b.latitude * .pi / 180
+        let sinDLat = sin(dLat / 2)
+        let sinDLon = sin(dLon / 2)
+        let aVal = sinDLat * sinDLat + sinDLon * sinDLon * cos(lat1) * cos(lat2)
+        let c = 2 * atan2(sqrt(aVal), sqrt(1 - aVal))
+        return R * c
     }
 }
 
