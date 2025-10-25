@@ -6,6 +6,9 @@
 //
 import SwiftUI
 
+// MARK: - FIX: Add this line
+private let headingDirections = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+
 struct GaugeView: View, Equatable {
     var speed: Double
     var heading: Double
@@ -181,9 +184,8 @@ private struct TicksAndLabelsView: View {
 }
 
 private func headingString(from direction: Double) -> String {
-    let directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
     let index = Int((direction + 11.25) / 22.5) & 15
-    return String(format: "%.0f° %@", direction, directions[index])
+    return String(format: "%.0f° %@", direction, headingDirections[index])
 }
 
 private struct CenterTextView: View {
