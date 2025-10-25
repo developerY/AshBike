@@ -9,26 +9,19 @@ import MapKit
 
 struct RideMapView: View {
     let route: [CLLocationCoordinate2D]
-
-    // --- 1. CHANGE STATE VARIABLE ---
-    // Change from MKCoordinateRegion to MapCameraPosition
-    // Initialize centered on a default location or the first point.
     @State private var cameraPosition: MapCameraPosition
-    
-    // --- NEW: Computed property for the single polyline ---
+
     private var routePolyline: MapPolyline? {
         guard route.count > 1 else { return nil }
         return MapPolyline(coordinates: route)
     }
-    
-    // --- 1. DEFINE THE EQUATABLE SNAPSHOT STRUCT ---
+
     private struct RouteSnapshot: Equatable {
         let count: Int
         let lastLat: CLLocationDegrees?
         let lastLon: CLLocationDegrees?
     }
-    
-    // --- 2. CREATE THE COMPUTED SNAPSHOT PROPERTY ---
+
     private var routeSnapshot: RouteSnapshot {
         RouteSnapshot(
             count: route.count,
@@ -37,16 +30,13 @@ struct RideMapView: View {
         )
     }
 
+
     init(route: [CLLocationCoordinate2D]) {
         self.route = route
-        
-        // --- 2. UPDATE INITIALIZER ---
-        // Initialize cameraPosition. Center on the first point if available,
-        // otherwise use a default region. Add a sensible span/zoom.
         let initialCenter = route.first ?? CLLocationCoordinate2D(latitude: 37.331705, longitude: -122.030237) // Default to Cupertino
         let initialRegion = MKCoordinateRegion(
             center: initialCenter,
-            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01) // Adjust zoom level as needed
+            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
         )
         self._cameraPosition = State(initialValue: .region(initialRegion))
     }
@@ -59,26 +49,32 @@ struct RideMapView: View {
                 Text("This ride does not have any GPS location data to display.")
             }
         } else {
-            // --- 3. BIND MAP TO CAMERA POSITION ---
-            // Use Map(position:) instead of Map(initialPosition:)
+            // --- USE MAP INITIALIZER WITH CONTROLS ---
             Map(position: $cameraPosition) {
-            // --- THIS IS THE FIX ---
-            // Use the computed property to add the polyline if it exists
-            if let polyline = routePolyline {
-                polyline
-                    .stroke(.blue, lineWidth: 4)
+                // Polyline remains the same
+                if let polyline = routePolyline {
+                    polyline
+                        .stroke(.blue, lineWidth: 4)
                 }
-                
-                // Optional: Add a marker for the current (last) position
-                if let lastCoordinate = route.last {
-                   Marker("Current", coordinate: lastCoordinate)
-                }
+
+                // --- REMOVE THE MARKER ---
+                // if let lastCoordinate = route.last {
+                //    Marker("Current", coordinate: lastCoordinate) // <-- REMOVED
+                // }
+
+                // --- ADD USER LOCATION VISUALIZATION ---
+                // This tells the Map to draw the blue dot
+                UserAnnotation()
             }
-            // --- 4. ADD ONCHANGE MODIFIER ---
-            // Update the camera position whenever the route changes
-            // --- 3. OBSERVE THE SNAPSHOT INSTEAD OF THE ARRAY ---
-            // Use the zero-parameter closure version of onChange
+            // --- ADD MAP CONTROLS ---
+            // This adds standard map buttons, including the one to center on user location
+            .mapControls {
+                MapUserLocationButton() // Button to center on the blue dot
+                MapCompass()
+                MapScaleView()
+            }
             .onChange(of: routeSnapshot) {
+                // Center camera on the *last point of the recorded route*
                 if let lastCoordinate = route.last {
                     withAnimation {
                         let currentSpan = cameraPosition.region?.span ?? MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
