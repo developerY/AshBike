@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import SwiftData
+import MetricKit
 
 @main
 struct AshBikeApp: App {
@@ -21,6 +22,7 @@ struct AshBikeApp: App {
     private let appSettings: AppSettings
     private let healthKitService: HealthKitService
     private let rideSessionManager: RideSessionManager
+    private let metricKitService: MetricKitService
     
     
     // --- 1. CREATE A STATE PROPERTY FOR APPSETTINGS ---
@@ -53,6 +55,10 @@ struct AshBikeApp: App {
                 appSettings: self.appSettings
             )
             
+            // Initialize MetricKit and process past payloads
+            self.metricKitService = MetricKitService()
+            self.metricKitService.processPastPayloads()
+            
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
@@ -72,3 +78,4 @@ struct AshBikeApp: App {
         .modelContainer(modelContainer)
     }
 }
+

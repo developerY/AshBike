@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		5E67A2992DE1196500D4557E /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 5E67A2982DE1195D00D4557E /* README.md */; };
+		5ED56CAA2EAD42600094CEA1 /* MetricKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5ED56CA92EAD42600094CEA1 /* MetricKit.framework */; };
 		5EDAF18D2E31982800DF480E /* BikeRider.icon in Resources */ = {isa = PBXBuildFile; fileRef = 5EDAF18C2E31982800DF480E /* BikeRider.icon */; };
 /* End PBXBuildFile section */
 
@@ -33,6 +34,7 @@
 		5E67A2712DE1003500D4557E /* AshBikeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AshBikeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E67A27B2DE1003500D4557E /* AshBikeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AshBikeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E67A2982DE1195D00D4557E /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		5ED56CA92EAD42600094CEA1 /* MetricKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetricKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.1.sdk/System/Library/Frameworks/MetricKit.framework; sourceTree = DEVELOPER_DIR; };
 		5EDAF18C2E31982800DF480E /* BikeRider.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = BikeRider.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -77,6 +79,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5ED56CAA2EAD42600094CEA1 /* MetricKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -106,6 +109,7 @@
 				5E67A2632DE1003300D4557E /* AshBike */,
 				5E67A2742DE1003500D4557E /* AshBikeTests */,
 				5E67A27E2DE1003500D4557E /* AshBikeUITests */,
+				5ED56CA82EAD42600094CEA1 /* Frameworks */,
 				5E67A2622DE1003300D4557E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -118,6 +122,14 @@
 				5E67A27B2DE1003500D4557E /* AshBikeUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		5ED56CA82EAD42600094CEA1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				5ED56CA92EAD42600094CEA1 /* MetricKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -437,7 +449,8 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AshBike/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "Exception\tNSException *\t\"The string \\\"We need it\\\" is an invalid value for NSHealthUpdateUsageDescription\"\t0x0000600000c58210";
+				INFOPLIST_KEY_CFBundleDisplayName = "Ash Bike";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "We need this to save the bike ride info";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need this to save the bike ride info";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We need this to save the bike ride info";
@@ -455,7 +468,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
@@ -489,7 +502,8 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AshBike/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "Exception\tNSException *\t\"The string \\\"We need it\\\" is an invalid value for NSHealthUpdateUsageDescription\"\t0x0000600000c58210";
+				INFOPLIST_KEY_CFBundleDisplayName = "Ash Bike";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSHealthClinicalHealthRecordsShareUsageDescription = "We need this to save the bike ride info";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need this to save the bike ride info";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We need this to save the bike ride info";
@@ -507,7 +521,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
