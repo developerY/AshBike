@@ -41,10 +41,31 @@ struct MainTabView: View {
 }
 
 #Preview {
-    // The preview now needs a model container to support the RideListView.
-    let config = ModelConfiguration(schema: Schema([BikeRide.self, RideLocation.self]), isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: Schema([BikeRide.self, RideLocation.self]), configurations: [config])
+    // 1. Define the complete schema for all child views
+    let schema = Schema([
+        BikeRide.self,
+        RideLocation.self,
+        UserProfile.self
+    ])
+    
+    // 2. Create the in-memory container
+    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: schema, configurations: [config])
 
+    // 3. Create all required app-level services
+    let appSettings = AppSettings()
+    let healthKitService = HealthKitService()
+    let rideDataManager = RideDataManager(modelContainer: container)
+    let rideSessionManager = RideSessionManager(
+        healthKitService: healthKitService,
+        appSettings: appSettings
+    )
+
+    // 4. Inject all services into the environment
     return MainTabView()
         .modelContainer(container)
+        .environment(appSettings)
+        .environment(healthKitService)
+        .environment(rideDataManager)
+        .environment(rideSessionManager)
 }

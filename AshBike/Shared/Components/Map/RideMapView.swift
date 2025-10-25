@@ -7,6 +7,31 @@
 import SwiftUI
 import MapKit
 
+// MARK: - Previews
+
+#Preview("Static Route") {
+    // A sample route with a few points
+    let sampleRoute: [CLLocationCoordinate2D] = [
+        CLLocationCoordinate2D(latitude: 37.331, longitude: -122.031),
+        CLLocationCoordinate2D(latitude: 37.332, longitude: -122.032),
+        CLLocationCoordinate2D(latitude: 37.333, longitude: -122.030),
+        CLLocationCoordinate2D(latitude: 37.331, longitude: -122.029)
+    ]
+    
+    return RideMapView(route: sampleRoute, showUserLocation: false)
+        .frame(height: 300)
+        .cornerRadius(12)
+        .padding()
+}
+
+#Preview("Empty Route") {
+    // Tests the "No Route Data" message
+    RideMapView(route: [], showUserLocation: false)
+        .frame(height: 300)
+        .cornerRadius(12)
+        .padding()
+}
+
 struct RideMapView: View {
     let route: [CLLocationCoordinate2D]
     let showUserLocation: Bool
@@ -135,4 +160,29 @@ struct RideMapView: View {
 
         return MKCoordinateRegion(center: center, span: span)
     }
+}
+
+// MARK: - Previews
+
+#Preview("Static Route") {
+    // A sample route with a few points
+    let sampleRoute: [CLLocationCoordinate2D] = [
+        CLLocationCoordinate2D(latitude: 37.331, longitude: -122.031),
+        CLLocationCoordinate2D(latitude: 37.332, longitude: -122.032),
+        CLLocationCoordinate2D(latitude: 37.333, longitude: -122.030),
+        CLLocationCoordinate2D(latitude: 37.331, longitude: -122.029)
+    ]
+    
+    return RideMapView(route: sampleRoute, showUserLocation: false)
+        .frame(height: 300)
+        .cornerRadius(12)
+        .padding()
+}
+
+#Preview("Empty Route") {
+    // Tests the "No Route Data" message
+    RideMapView(route: [], showUserLocation: false)
+        .frame(height: 300)
+        .cornerRadius(12)
+        .padding()
 }

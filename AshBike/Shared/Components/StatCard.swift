@@ -46,3 +46,23 @@ struct StatCard: View {
   }
 }
 
+#Preview {
+    HStack(spacing: 12) {
+        StatCard(
+            title: "Distance",
+            value: 25.8,
+            unit: "km",
+            format: .decimal
+        )
+        
+        StatCard(
+            title: "Duration",
+            value: 3720, // (62 minutes)
+            unit: "",
+            format: .time
+        )
+    }
+    .padding()
+    .background(Color.gray.opacity(0.1))
+}
+

@@ -53,3 +53,35 @@ struct CollapsibleSection<Content: View>: View {
         .cornerRadius(8)
     }
 }
+
+#Preview {
+    // Use a stateful preview to test the binding
+    struct CollapsiblePreview: View {
+        @State private var isExpanded1 = true
+        @State private var isExpanded2 = false
+
+        var body: some View {
+            VStack(spacing: 16) {
+                CollapsibleSection(
+                    title: "Expanded Section",
+                    isExpanded: $isExpanded1
+                ) {
+                    Text("This is the content of the section that is visible by default.")
+                        .padding()
+                }
+                
+                CollapsibleSection(
+                    title: "Collapsed Section",
+                    isExpanded: $isExpanded2
+                ) {
+                    Text("This content is hidden by default. Tap the header to see it.")
+                        .padding()
+                }
+            }
+            .padding()
+            .background(Color.gray.opacity(0.1))
+        }
+    }
+    
+    return CollapsiblePreview()
+}
