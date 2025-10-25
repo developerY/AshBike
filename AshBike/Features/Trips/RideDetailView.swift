@@ -12,8 +12,12 @@ import MapKit
 
 struct RideDetailView: View {
     @Bindable var ride: BikeRide
-    @Environment(\.modelContext) private var modelContext
     
+    // --- 1. ADD ENVIRONMENT VARIABLES ---
+    @Environment(RideDataManager.self) private var rideDataManager
+    @Environment(\.dismiss) private var dismiss
+
+    // ... (coordinates and formatters remain the same) ...
     // ** THE FIX IS HERE **
     // We must explicitly sort the locations by timestamp to guarantee the
     // route is drawn in the correct order.
@@ -101,11 +105,19 @@ struct RideDetailView: View {
         .navigationTitle("Ride Details")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
+                // --- 2. MODIFY THE BUTTON ACTION ---
                 Button(role: .destructive) {
-                    modelContext.delete(ride)
-                    // ** THE FIX IS HERE: **
-                    // Explicitly save the context after deleting.
-                    try? modelContext.save()
+                    Task {
+                        do {
+                            try await rideDataManager.delete(ride: ride)
+                            // Dismiss the view after successful deletion
+                            dismiss()
+                        } catch {
+                            // Handle or log the error appropriately
+                            print("Error deleting ride: \(error)")
+                            // You could show an alert here if needed
+                        }
+                    }
                 } label: {
                     Image(systemName: "trash")
                 }
