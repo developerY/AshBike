@@ -81,3 +81,17 @@ struct RideMapView: View {
         return MKCoordinateRegion(center: center, span: span)
     }
 }
+
+struct RideMapView_Previews: PreviewProvider {
+    static var sampleRoute: [CLLocationCoordinate2D] = [
+        .init(latitude: 37.3349, longitude: -122.0090),
+        .init(latitude: 37.3350, longitude: -122.0091),
+        .init(latitude: 37.3351, longitude: -122.0092)
+    ]
+
+    static var previews: some View {
+        RideMapView(route: sampleRoute)
+            .frame(height: 200)
+            .previewLayout(.sizeThatFits)
+    }
+}

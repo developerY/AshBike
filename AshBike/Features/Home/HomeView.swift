@@ -247,7 +247,9 @@ private struct LiveRouteSheetView: View, Equatable {
                 .font(.headline)
                 .padding()
             
-            RouteMapView(route: displayedRoute)
+            // --- THIS IS THE FIX ---
+            // Changed from RouteMapView to RideMapView
+            RideMapView(route: displayedRoute)
         }
         .onAppear {
             displayedRoute = thinRoute(route, minDistanceMeters: minDistanceMeters)
@@ -329,4 +331,3 @@ struct HomeView_Previews: PreviewProvider {
             .modelContainer(modelContainer)
     }
 }
-
