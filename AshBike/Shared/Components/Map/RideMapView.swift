@@ -10,16 +10,32 @@ import MapKit
 struct RideMapView: View {
     let route: [CLLocationCoordinate2D]
 
-    // The map's region is calculated once and stored in state.
-    @State private var region: MKCoordinateRegion
+    // --- 1. CHANGE STATE VARIABLE ---
+    // Change from MKCoordinateRegion to MapCameraPosition
+    // Initialize centered on a default location or the first point.
+    @State private var cameraPosition: MapCameraPosition
+    
+    // --- NEW: Computed property for the single polyline ---
+    private var routePolyline: MapPolyline? {
+        guard route.count > 1 else { return nil }
+        return MapPolyline(coordinates: route)
+    }
 
     init(route: [CLLocationCoordinate2D]) {
         self.route = route
-        self._region = State(initialValue: RideMapView.region(for: route))
+        
+        // --- 2. UPDATE INITIALIZER ---
+        // Initialize cameraPosition. Center on the first point if available,
+        // otherwise use a default region. Add a sensible span/zoom.
+        let initialCenter = route.first ?? CLLocationCoordinate2D(latitude: 37.331705, longitude: -122.030237) // Default to Cupertino
+        let initialRegion = MKCoordinateRegion(
+            center: initialCenter,
+            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01) // Adjust zoom level as needed
+        )
+        self._cameraPosition = State(initialValue: .region(initialRegion))
     }
 
     var body: some View {
-        // If the route is empty, show a helpful message.
         if route.isEmpty {
             ContentUnavailableView {
                 Label("No Route Data", systemImage: "map.circle")
@@ -27,22 +43,40 @@ struct RideMapView: View {
                 Text("This ride does not have any GPS location data to display.")
             }
         } else {
-            // Use the calculated region to set the map's initial position.
-            Map(initialPosition: .region(region)) {
-                // This loop draws the route as individual segments (1->2, 2->3, etc.)
-                // which bypasses rendering bugs and creates a single, continuous path.
+            // --- 3. BIND MAP TO CAMERA POSITION ---
+            // Use Map(position:) instead of Map(initialPosition:)
+            Map(position: $cameraPosition) {
+                // Drawing the polyline remains the same
                 if route.count > 1 {
                     ForEach(0..<route.count - 1, id: \.self) { i in
-                        // Create a two-point array for each segment of the ride
                         let segment = [route[i], route[i+1]]
                         MapPolyline(coordinates: segment)
                             .stroke(.blue, lineWidth: 4)
                     }
                 }
+                
+                // Optional: Add a marker for the current (last) position
+                if let lastCoordinate = route.last {
+                   Marker("Current", coordinate: lastCoordinate)
+                }
+            }
+            // --- 4. ADD ONCHANGE MODIFIER ---
+            // Update the camera position whenever the route changes
+            .onChange(of: route) {
+                // Center the map on the last coordinate
+                if let lastCoordinate = route.last {
+                    withAnimation { // Smoothly animate the camera movement
+                        // Keep the same span (zoom level) but change the center
+                        let currentSpan = cameraPosition.region?.span ?? MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                        cameraPosition = .region(MKCoordinateRegion(center: lastCoordinate, span: currentSpan))
+                    }
+                }
             }
         }
     }
-
+    
+    // The static region calculation function is no longer needed for centering,
+    // but you might keep it if you need to calculate a bounding box elsewhere.
     /// Calculates a map region that fits all the given coordinates.
     static func region(for route: [CLLocationCoordinate2D]) -> MKCoordinateRegion {
         guard let first = route.first else {
