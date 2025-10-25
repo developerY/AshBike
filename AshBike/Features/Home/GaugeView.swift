@@ -126,34 +126,64 @@ private struct TicksAndLabelsView: View {
     let radius: CGFloat
     let maxSpeed: Double
     private let tickCount = 7
+    
+    // 1. Create a helper struct for the tick data
+    private struct TickData: Identifiable {
+        let id: Int
+        let value: Double
+        let angle: Angle
+    }
+    
+    // 2. Pre-compute the data to simplify the ForEach loop
+    private var tickData: [TickData] {
+        (0..<tickCount).map { i in
+            let value = Double(i) * (maxSpeed / Double(tickCount - 1))
+            let angle = angleForValue(value)
+            return TickData(id: i, value: value, angle: angle)
+        }
+    }
 
     var body: some View {
         ZStack {
-            ForEach(0..<tickCount) { i in
-                let value = Double(i) * (maxSpeed / Double(tickCount - 1))
-                let angle = angleForValue(value)
-
-                // Tick Marks
-                Rectangle()
-                    .fill(Color.black.opacity(0.7)) // Change from .fill(Color.white.opacity(0.7))
-                    .frame(width: 2, height: 10)
-                    .position(x: center.x + (radius * 0.9) * cos(CGFloat(angle.radians)),
-                              y: center.y + (radius * 0.9) * sin(CGFloat(angle.radians)))
-                    .rotationEffect(angle + .degrees(90))
-
-                // Tick Labels
-                Text(String(format: "%.0f", value))
-                    .font(.system(size: radius * 0.1, weight: .bold))
-                    .foregroundStyle(.black.opacity(0.8)) // Change from .foregroundStyle(.white.opacity(0.8))
-                    .position(x: center.x + (radius * 0.78) * cos(CGFloat(angle.radians)),
-                              y: center.y + (radius * 0.78) * sin(CGFloat(angle.radians)))
+            // 3. The ForEach is now much simpler
+            ForEach(tickData) { data in
+                tickMark(angle: data.angle)
+                tickLabel(value: data.value, angle: data.angle)
             }
         }
     }
+    
+    // 4. Create a @ViewBuilder for the tick mark
+    @ViewBuilder
+    private func tickMark(angle: Angle) -> some View {
+        Rectangle()
+            .fill(Color.black.opacity(0.7))
+            .frame(width: 2, height: 10)
+            .position(x: center.x + (radius * 0.9) * cos(CGFloat(angle.radians)),
+                      y: center.y + (radius * 0.9) * sin(CGFloat(angle.radians)))
+            .rotationEffect(angle + .degrees(90))
+    }
+        
+    // 5. Create a @ViewBuilder for the tick label
+    @ViewBuilder
+    private func tickLabel(value: Double, angle: Angle) -> some View {
+        Text(String(format: "%.0f", value))
+            .font(.system(size: radius * 0.1, weight: .bold))
+            .foregroundStyle(.black.opacity(0.8))
+            .position(x: center.x + (radius * 0.78) * cos(CGFloat(angle.radians)),
+                      y: center.y + (radius * 0.78) * sin(CGFloat(angle.radians)))
+    }
+
 
     private func angleForValue(_ value: Double) -> Angle {
         .degrees(135) + .degrees(270 * (value / maxSpeed))
     }
+}
+
+private func headingString(from direction: Double) -> String {
+    let directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+    let index = Int((direction + 11.25) / 22.5) & 15
+    return String(format: "%.0f° %@", direction, directions[index])
 }
 
 private struct CenterTextView: View {
@@ -188,11 +218,6 @@ private struct CenterTextView: View {
         .shadow(color: .black.opacity(0.5), radius: 3, y: 2)
     }
 
-    private func headingString(from direction: Double) -> String {
-        let directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
-        let index = Int((direction + 11.25) / 22.5) & 15
-        return String(format: "%.0f° %@", direction, directions[index])
-    }
 }
 
 private struct NeedleView: View {
