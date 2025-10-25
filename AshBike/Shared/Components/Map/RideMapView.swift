@@ -20,6 +20,22 @@ struct RideMapView: View {
         guard route.count > 1 else { return nil }
         return MapPolyline(coordinates: route)
     }
+    
+    // --- 1. DEFINE THE EQUATABLE SNAPSHOT STRUCT ---
+    private struct RouteSnapshot: Equatable {
+        let count: Int
+        let lastLat: CLLocationDegrees?
+        let lastLon: CLLocationDegrees?
+    }
+    
+    // --- 2. CREATE THE COMPUTED SNAPSHOT PROPERTY ---
+    private var routeSnapshot: RouteSnapshot {
+        RouteSnapshot(
+            count: route.count,
+            lastLat: route.last?.latitude,
+            lastLon: route.last?.longitude
+        )
+    }
 
     init(route: [CLLocationCoordinate2D]) {
         self.route = route
@@ -46,13 +62,11 @@ struct RideMapView: View {
             // --- 3. BIND MAP TO CAMERA POSITION ---
             // Use Map(position:) instead of Map(initialPosition:)
             Map(position: $cameraPosition) {
-                // Drawing the polyline remains the same
-                if route.count > 1 {
-                    ForEach(0..<route.count - 1, id: \.self) { i in
-                        let segment = [route[i], route[i+1]]
-                        MapPolyline(coordinates: segment)
-                            .stroke(.blue, lineWidth: 4)
-                    }
+            // --- THIS IS THE FIX ---
+            // Use the computed property to add the polyline if it exists
+            if let polyline = routePolyline {
+                polyline
+                    .stroke(.blue, lineWidth: 4)
                 }
                 
                 // Optional: Add a marker for the current (last) position
@@ -62,11 +76,11 @@ struct RideMapView: View {
             }
             // --- 4. ADD ONCHANGE MODIFIER ---
             // Update the camera position whenever the route changes
-            .onChange(of: route) {
-                // Center the map on the last coordinate
+            // --- 3. OBSERVE THE SNAPSHOT INSTEAD OF THE ARRAY ---
+            // Use the zero-parameter closure version of onChange
+            .onChange(of: routeSnapshot) {
                 if let lastCoordinate = route.last {
-                    withAnimation { // Smoothly animate the camera movement
-                        // Keep the same span (zoom level) but change the center
+                    withAnimation {
                         let currentSpan = cameraPosition.region?.span ?? MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
                         cameraPosition = .region(MKCoordinateRegion(center: lastCoordinate, span: currentSpan))
                     }
