@@ -10,8 +10,9 @@ import Observation
 import SwiftData
 import SwiftUI
 
+@MainActor
 @Observable
-final class RideSessionManager: NSObject, CLLocationManagerDelegate {
+final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
     // Live-tracked properties (always on)
     var currentSpeed: Double = 0
     var heading: CLLocationDirection = 0
@@ -49,6 +50,40 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     private let appSettings: AppSettings
 
     private let locationManager = CLLocationManager()
+
+    // Location tuning constants
+    private let idleDesiredAccuracy: CLLocationAccuracy = kCLLocationAccuracyHundredMeters
+    private let recordingDesiredAccuracy: CLLocationAccuracy = kCLLocationAccuracyBest
+    private let idleDistanceFilter: CLLocationDistance = 25 // meters
+    private let recordingDistanceFilter: CLLocationDistance = 5 // meters
+    private let headingChangeThreshold: CLLocationDegrees = 5 // degrees
+
+    // Check if the app has Location background capability
+    private var hasLocationBackgroundCapability: Bool {
+        if let modes = Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] {
+            return modes.contains("location")
+        }
+        return false
+    }
+
+    // Configure manager for low-power idle tracking
+    private func configureForIdle() {
+        locationManager.desiredAccuracy = idleDesiredAccuracy
+        locationManager.distanceFilter = idleDistanceFilter
+        locationManager.pausesLocationUpdatesAutomatically = true
+        locationManager.allowsBackgroundLocationUpdates = false
+        locationManager.headingFilter = headingChangeThreshold
+    }
+
+    // Configure manager for high-accuracy recording
+    private func configureForRecording() {
+        locationManager.desiredAccuracy = recordingDesiredAccuracy
+        locationManager.distanceFilter = recordingDistanceFilter
+        locationManager.pausesLocationUpdatesAutomatically = false
+        locationManager.allowsBackgroundLocationUpdates = hasLocationBackgroundCapability
+        locationManager.headingFilter = headingChangeThreshold
+    }
+
     private var startDate: Date?
     private var timer: Timer?
     
@@ -58,10 +93,10 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         super.init()
         locationManager.delegate = self
         locationManager.activityType = .fitness
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.requestWhenInUseAuthorization()
-        
-        // Start tracking live data immediately
+
+        // Start in low-power idle mode (still updates for the gauge)
+        configureForIdle()
         locationManager.startUpdatingLocation()
         locationManager.startUpdatingHeading()
     }
@@ -77,6 +112,7 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         self.userWeight = userWeightKg
         
         resetRecordingMetrics()
+        configureForRecording()
         
         startDate = Date()
         startTimer()
@@ -106,6 +142,7 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         
         // Stop observing heart rate
         healthKitService.stopObservingHeartRate()
+        configureForIdle()
         
         stopTimer()
         
@@ -151,7 +188,7 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
         )
     }
 
-    private func metForSpeed(_ speed: Double) -> Double {
+    nonisolated private func metForSpeed(_ speed: Double) -> Double {
         let kmh = speed * 3.6
         switch kmh {
             case ..<10: return 4.0
@@ -164,15 +201,21 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     private func startTimer() {
         stopTimer()
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self = self, let start = self.startDate else { return }
-            self.duration = Date().timeIntervalSince(start)
-            if self.duration > 0 {
-                self.avgSpeed = self.distance / self.duration
+            guard let self = self else { return }
+            Task { @MainActor in
+                guard let start = self.startDate else { return }
+                self.duration = Date().timeIntervalSince(start)
+                if self.duration > 0 {
+                    self.avgSpeed = self.distance / self.duration
+                }
+                // --- MODIFIED ---
+                // The calorie calculation now uses the userWeight property.
+                let kcal = self.metForSpeed(self.currentSpeed) * self.userWeight * (self.duration / 3600)
+                self.calories = Int(kcal)
             }
-            // --- MODIFIED ---
-            // The calorie calculation now uses the userWeight property.
-            let kcal = self.metForSpeed(self.currentSpeed) * self.userWeight * (self.duration / 3600)
-            self.calories = Int(kcal)
+        }
+        if let timer = self.timer {
+            RunLoop.main.add(timer, forMode: .common)
         }
     }
     
@@ -180,25 +223,33 @@ final class RideSessionManager: NSObject, CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let newLoc = locations.last else { return }
-        
-        // Always update the current speed
-        currentSpeed = max(0, newLoc.speed)
-        
-        // Only update recording metrics if a ride is in progress
-        if isRecording {
-            maxSpeed = max(maxSpeed, currentSpeed)
 
-            if let last = route.last {
-                let delta = newLoc.distance(from: last)
-                // Throttle: only append and accumulate distance when moved at least 5 meters
-                if delta >= 5 {
-                    distance += delta
-                    route.append(newLoc)
-                }
-            } else {
-                // First point of the recording
+        // Discard stale or low-quality samples
+        let age = -newLoc.timestamp.timeIntervalSinceNow
+        if age > 3 { return } // older than 3 seconds
+        if newLoc.horizontalAccuracy < 0 || newLoc.horizontalAccuracy > 50 { return } // poor accuracy
+
+        // Compute non-negative speed
+        let clampedSpeed = max(0, newLoc.speed)
+
+        // Always update the current speed for the gauge
+        currentSpeed = clampedSpeed
+
+        // If we're not recording, don't update route/distance
+        guard isRecording else { return }
+        
+        maxSpeed = max(maxSpeed, clampedSpeed)
+
+        if let last = route.last {
+            let delta = newLoc.distance(from: last)
+            // Throttle: only append and accumulate distance when moved at least 5 meters
+            if delta >= 5 {
+                distance += delta
                 route.append(newLoc)
             }
+        } else {
+            // First point of the recording
+            route.append(newLoc)
         }
     }
     
