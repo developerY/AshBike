@@ -137,11 +137,16 @@ extension Optional where Wrapped == String {
 
 // MARK: — Preview with in-memory container
 #Preview {
+    // 1. Create the container
     let container = try! ModelContainer(
       for: Schema([BikeRide.self, RideLocation.self]),
       configurations: [ModelConfiguration(isStoredInMemoryOnly: true)]
     )
     
+    // 2. Create the RideDataManager
+    let rideDataManager = RideDataManager(modelContainer: container)
+    
+    // 3. Create and insert the sample data
     let sampleRide = BikeRide(
         startTime: .now.addingTimeInterval(-600),
         endTime: .now,
@@ -153,8 +158,10 @@ extension Optional where Wrapped == String {
     )
     container.mainContext.insert(sampleRide)
     
+    // 4. Return the view and inject ALL dependencies
     return NavigationStack {
         RideDetailView(ride: sampleRide)
     }
     .modelContainer(container)
+    .environment(rideDataManager) // <-- ADD THIS LINE
 }

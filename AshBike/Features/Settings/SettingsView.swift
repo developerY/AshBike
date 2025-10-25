@@ -200,14 +200,25 @@ struct SettingsView: View {
 
 // MARK: — Preview
 #Preview {
-    let config = ModelConfiguration(schema: Schema([UserProfile.self, BikeRide.self]), isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: Schema([UserProfile.self]), configurations: [config])
-    let appSettings = AppSettings()
-    // We no longer need to insert a profile for the preview,
-    // as the view's .onAppear will handle it.
+    // 1. Define the full schema needed for the view and its dependencies
+    // (SettingsView needs UserProfile and RideDataManager, which needs BikeRide)
+    let fullSchema = Schema([UserProfile.self, BikeRide.self, RideLocation.self])
     
+    // 2. Create the configuration using that schema
+    let config = ModelConfiguration(schema: fullSchema, isStoredInMemoryOnly: true)
+    
+    // 3. Create the container using the SAME schema
+    let container = try! ModelContainer(for: fullSchema, configurations: [config])
+    
+    // 4. Create all required services
+    let appSettings = AppSettings()
+    let healthKitService = HealthKitService()
+    let rideDataManager = RideDataManager(modelContainer: container) // This was missing
+
+    // 5. Inject all services used by SettingsView
     return SettingsView()
         .modelContainer(container)
-        .environment(HealthKitService()) // Add service to preview environment
-        .environment(appSettings) // Add AppSettings to preview
+        .environment(healthKitService)
+        .environment(appSettings)
+        .environment(rideDataManager) // This was missing
 }

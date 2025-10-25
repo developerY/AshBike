@@ -22,3 +22,9 @@ struct MetricCard: View {
     .cornerRadius(8)
   }
 }
+
+#Preview("MetricCard") {
+  MetricCard(label: "Speed", value: "22.4 mph")
+    .padding()
+    .background(Color(.systemBackground))
+}

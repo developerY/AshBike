@@ -302,32 +302,31 @@ private struct LiveRouteSheetView: View, Equatable {
     }
 }
 
-struct HomeView_Previews: PreviewProvider {
-    static var previews: some View {
-        // 1. Create instances of all the required services.
-        let appSettings = AppSettings()
-        let healthKitService = HealthKitService()
-        
-        // 2. Create the data manager with an in-memory container for the preview.
-        let modelContainer = try! ModelContainer(
-            for: UserProfile.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        let rideDataManager = RideDataManager(modelContainer: modelContainer)
-        
-        // 3. Create the RideSessionManager, injecting its dependencies.
-        let rideSessionManager = RideSessionManager(
-            healthKitService: healthKitService,
-            appSettings: appSettings
-        )
+#Preview {
+    // 1. Create instances of all the required services.
+    let appSettings = AppSettings()
+    let healthKitService = HealthKitService()
+    
+    // 2. Create the data manager with an in-memory container for the preview.
+    let modelContainer = try! ModelContainer(
+        for: UserProfile.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    let rideDataManager = RideDataManager(modelContainer: modelContainer)
+    
+    // 3. Create the RideSessionManager, injecting its dependencies.
+    let rideSessionManager = RideSessionManager(
+        healthKitService: healthKitService,
+        appSettings: appSettings
+    )
 
-        // 4. Return the HomeView and inject all services into the environment,
-        //    mirroring the setup in AshBikeApp.swift.
-        HomeView()
-            .environment(appSettings)
-            .environment(healthKitService)
-            .environment(rideSessionManager)
-            .environment(rideDataManager)
-            .modelContainer(modelContainer)
-    }
+    // 4. Return the HomeView and inject all services into the environment,
+    //    mirroring the setup in AshBikeApp.swift.
+    HomeView()
+        .environment(appSettings)
+        .environment(healthKitService)
+        .environment(rideSessionManager)
+        .environment(rideDataManager)
+        .modelContainer(modelContainer)
+    
 }

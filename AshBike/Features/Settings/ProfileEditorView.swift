@@ -58,3 +58,16 @@ struct ProfileEditorView: View {
     }
 }
 
+#Preview("ProfileEditorView") {
+    struct PreviewHost: View {
+        @State private var isEditing = true
+        @State private var profile = UserProfile(name: "Alex Rider", heightCm: 178, weightKg: 72)
+        var body: some View {
+            ProfileEditorView(profile: profile, isEditing: $isEditing)
+                .padding()
+        }
+    }
+    return PreviewHost()
+        .modelContainer(for: UserProfile.self, inMemory: true)
+        .background(Color(.systemBackground))
+}

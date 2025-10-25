@@ -158,10 +158,12 @@ struct RideListView: View {
     // 4. Create instances of the services needed for the preview
     let rideDataManager = RideDataManager(modelContainer: container)
     let healthKitService = HealthKitService()
+    let appSettings = AppSettings() // <-- ADD THIS LINE
     
     // 5. Return the view, injecting the container and all necessary services
     return RideListView()
         .modelContainer(container)
         .environment(rideDataManager)
         .environment(healthKitService)
+        .environment(appSettings) // <-- ADD THIS LINE
 }

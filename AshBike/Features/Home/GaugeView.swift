@@ -322,13 +322,10 @@ private struct GaugeArcShape: Shape {
 
 // MARK: - Preview
 
-struct GaugeView_Previews: PreviewProvider {
-    static var previews: some View {
-        GaugeView(speed: 25, heading: 270, onMapButtonTapped: { print("Map tapped") })
-            .frame(width: 300, height: 300)
-            .padding()
-            .background(Color.gray.opacity(0.2)) // A neutral background for the preview
-            .previewLayout(.sizeThatFits)
-    }
+#Preview {
+    GaugeView(speed: 25, heading: 270, onMapButtonTapped: { print("Map tapped") })
+        .frame(width: 300, height: 300)
+        .padding()
+        .background(Color.gray.opacity(0.2)) // A neutral background for the preview
 }
 
