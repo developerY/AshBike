@@ -9,6 +9,7 @@ import MapKit
 
 struct RideMapView: View {
     let route: [CLLocationCoordinate2D]
+    let showUserLocation: Bool
     @State private var cameraPosition: MapCameraPosition
 
     private var routePolyline: MapPolyline? {
@@ -30,15 +31,25 @@ struct RideMapView: View {
         )
     }
 
-
-    init(route: [CLLocationCoordinate2D]) {
+    init(route: [CLLocationCoordinate2D], showUserLocation: Bool = true) {
         self.route = route
-        let initialCenter = route.first ?? CLLocationCoordinate2D(latitude: 37.331705, longitude: -122.030237) // Default to Cupertino
-        let initialRegion = MKCoordinateRegion(
-            center: initialCenter,
-            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-        )
+        self.showUserLocation = showUserLocation
+
+        // --- THIS IS THE FIX ---
+        let initialRegion: MKCoordinateRegion
+        if !showUserLocation {
+            // Calculate bounding region for the *entire* route
+            initialRegion = RideMapView.region(for: route) // Use static helper
+        } else {
+            // Existing behavior for live view (center on first point initially)
+            let initialCenter = route.first ?? CLLocationCoordinate2D(latitude: 37.331705, longitude: -122.030237)
+            initialRegion = MKCoordinateRegion(
+                center: initialCenter,
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            )
+        }
         self._cameraPosition = State(initialValue: .region(initialRegion))
+        // --- END FIX ---
     }
 
     var body: some View {
@@ -49,51 +60,48 @@ struct RideMapView: View {
                 Text("This ride does not have any GPS location data to display.")
             }
         } else {
-            // --- USE MAP INITIALIZER WITH CONTROLS ---
             Map(position: $cameraPosition) {
-                // Polyline remains the same
                 if let polyline = routePolyline {
                     polyline
                         .stroke(.blue, lineWidth: 4)
                 }
-
-                // --- REMOVE THE MARKER ---
-                // if let lastCoordinate = route.last {
-                //    Marker("Current", coordinate: lastCoordinate) // <-- REMOVED
-                // }
-
-                // --- ADD USER LOCATION VISUALIZATION ---
-                // This tells the Map to draw the blue dot
-                UserAnnotation()
+                if showUserLocation {
+                    UserAnnotation()
+                }
             }
-            // --- ADD MAP CONTROLS ---
-            // This adds standard map buttons, including the one to center on user location
             .mapControls {
-                MapUserLocationButton() // Button to center on the blue dot
+                if showUserLocation {
+                    MapUserLocationButton()
+                }
                 MapCompass()
                 MapScaleView()
             }
             .onChange(of: routeSnapshot) {
-                // Center camera on the *last point of the recorded route*
-                if let lastCoordinate = route.last {
+                // Only update camera for the live view
+                if showUserLocation, let lastCoordinate = route.last {
                     withAnimation {
                         let currentSpan = cameraPosition.region?.span ?? MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
                         cameraPosition = .region(MKCoordinateRegion(center: lastCoordinate, span: currentSpan))
                     }
                 }
+                // No camera update needed here for the static detail view
             }
         }
     }
     
-    // The static region calculation function is no longer needed for centering,
-    // but you might keep it if you need to calculate a bounding box elsewhere.
+    // --- ADD BACK THE STATIC HELPER FUNCTION ---
     /// Calculates a map region that fits all the given coordinates.
     static func region(for route: [CLLocationCoordinate2D]) -> MKCoordinateRegion {
-        guard let first = route.first else {
-            return MKCoordinateRegion()
+        guard !route.isEmpty else {
+            // Return a default region if the route is empty
+            return MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 37.331705, longitude: -122.030237), // Cupertino
+                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+            )
         }
-        
-        if route.count == 1 {
+
+        if route.count == 1, let first = route.first {
+            // If only one point, center on it with a small span
             return MKCoordinateRegion(
                 center: first,
                 span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
@@ -101,8 +109,8 @@ struct RideMapView: View {
         }
 
         // Find the bounding box that contains the entire route.
-        var minLat = first.latitude, maxLat = first.latitude
-        var minLon = first.longitude, maxLon = first.longitude
+        var minLat = route[0].latitude, maxLat = route[0].latitude
+        var minLon = route[0].longitude, maxLon = route[0].longitude
 
         for point in route {
             minLat = min(minLat, point.latitude)
@@ -111,31 +119,20 @@ struct RideMapView: View {
             maxLon = max(maxLon, point.longitude)
         }
 
-        // Create a region with a bit of padding.
+        // Calculate center and span with padding.
         let center = CLLocationCoordinate2D(
             latitude: (minLat + maxLat) / 2.0,
             longitude: (minLon + maxLon) / 2.0
         )
         
+        // Ensure span is not zero and add padding
+        let latitudeDelta = max(abs(maxLat - minLat) * 1.4, 0.01) // Add minimum span
+        let longitudeDelta = max(abs(maxLon - minLon) * 1.4, 0.01) // Add minimum span
         let span = MKCoordinateSpan(
-            latitudeDelta: (maxLat - minLat) * 1.4,
-            longitudeDelta: (maxLon - minLon) * 1.4
+            latitudeDelta: latitudeDelta,
+            longitudeDelta: longitudeDelta
         )
 
         return MKCoordinateRegion(center: center, span: span)
-    }
-}
-
-struct RideMapView_Previews: PreviewProvider {
-    static var sampleRoute: [CLLocationCoordinate2D] = [
-        .init(latitude: 37.3349, longitude: -122.0090),
-        .init(latitude: 37.3350, longitude: -122.0091),
-        .init(latitude: 37.3351, longitude: -122.0092)
-    ]
-
-    static var previews: some View {
-        RideMapView(route: sampleRoute)
-            .frame(height: 200)
-            .previewLayout(.sizeThatFits)
     }
 }

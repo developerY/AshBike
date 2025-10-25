@@ -66,7 +66,7 @@ struct RideDetailView: View {
                     .foregroundStyle(.secondary)
                   
                 // — Map with Polyline Overlay —
-                RideMapView(route: coordinates)
+                RideMapView(route: coordinates, showUserLocation: false)
                     .frame(height: 250)
                     .cornerRadius(12)
                     .shadow(radius: 4)
