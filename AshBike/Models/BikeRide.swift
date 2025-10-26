@@ -19,9 +19,10 @@ public class BikeRide: Identifiable {
     public var elevationGain: Double
     public var calories: Int
     public var notes: String?
-    
+    // --- MODIFY THIS LINE ---
+    @Relationship(deleteRule: .cascade, inverse: \RideLocation.ride)
     var locations: [RideLocation]
-    
+        
     init(
         startTime: Date = .now,
         endTime: Date = .now,

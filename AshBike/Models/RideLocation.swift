@@ -16,6 +16,8 @@ class RideLocation {
   var latitude: Double
   var longitude: Double
   var speed: Double?
+    
+    var ride: BikeRide?
 
   init(timestamp: Date, lat: Double, lon: Double, speed: Double? = nil) {
       self.id = UUID()
