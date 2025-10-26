@@ -97,8 +97,19 @@ final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
 
         // Start in low-power idle mode (still updates for the gauge)
         configureForIdle()
+        // locationManager.startUpdatingLocation()
+        // locationManager.startUpdatingHeading()
+    }
+    
+    // --- ADD THESE TWO PUBLIC METHODS ---
+    public func startIdleMonitoring() {
         locationManager.startUpdatingLocation()
         locationManager.startUpdatingHeading()
+    }
+
+    public func stopIdleMonitoring() {
+        locationManager.stopUpdatingLocation()
+        locationManager.stopUpdatingHeading()
     }
 
     // --- MODIFIED ---

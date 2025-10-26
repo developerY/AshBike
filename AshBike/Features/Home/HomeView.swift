@@ -158,6 +158,17 @@ struct HomeView: View {
                 message: Text(alert.message),
                 dismissButton: .default(Text("OK"))
             )
+        }// --- ADD THESE MODIFIERS ---
+        .onAppear {
+            // Start live updates when the view appears
+            session.startIdleMonitoring()
+        }
+        .onDisappear {
+            // Stop live updates when the view disappears,
+            // but ONLY if a ride is not being recorded.
+            if !session.isRecording {
+                session.stopIdleMonitoring()
+            }
         }
     }
 
