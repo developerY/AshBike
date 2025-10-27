@@ -16,13 +16,39 @@ struct RideDetailView: View {
     // --- 1. ADD ENVIRONMENT VARIABLES ---
     @Environment(RideDataManager.self) private var rideDataManager
     @Environment(\.dismiss) private var dismiss
+    
+    // --- 1. ADD THE @Query ---
+    // This fetches locations pre-sorted by the database, only for this ride.
+    @Query private var sortedLocations: [RideLocation]
+    
+    // --- 2. ADD A CUSTOM init ---
+    // This configures the @Query to filter by the ride's ID.
+    init(ride: BikeRide) {
+        self.ride = ride
+        
+        let rideID = ride.id
+        self._sortedLocations = Query(
+            filter: #Predicate { $0.ride?.id == rideID },
+            sort: \.timestamp,
+            order: .forward
+        )
+    }
 
     // ... (coordinates and formatters remain the same) ...
     // ** THE FIX IS HERE **
     // We must explicitly sort the locations by timestamp to guarantee the
     // route is drawn in the correct order.
+    /*private var coordinates: [CLLocationCoordinate2D] {
+        ride.locations.sorted(by: {_,_ in true}).map {
+        //ride.locations.sorted(by: { $0.timestamp < $1.timestamp }).map {
+            CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
+        }
+    }*/
+    
+    // --- 3. REPLACE THE OLD SORTING PROPERTY ---
+    // This is now extremely fast, as the database did all the work.
     private var coordinates: [CLLocationCoordinate2D] {
-        ride.locations.sorted(by: { $0.timestamp < $1.timestamp }).map {
+        sortedLocations.map {
             CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
         }
     }
