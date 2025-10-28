@@ -13,7 +13,8 @@ import SwiftUI
 @MainActor
 @Observable
 final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
-    // Live-tracked properties (always on)
+    // --- 1. UI-FACING PROPERTIES ---
+    // These are read by the UI and will now update on a fixed timer.
     var currentSpeed: Double = 0
     var heading: CLLocationDirection = 0
     
@@ -50,6 +51,18 @@ final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
     private let appSettings: AppSettings
 
     private let locationManager = CLLocationManager()
+    
+    // --- 2. INTERNAL "LATCH" PROPERTIES ---
+    // These get updated rapidly by CoreLocation on any thread.
+    private var lastKnownSpeed: Double = 0
+    private var lastKnownHeading: CLLocationDirection = 0
+
+    // --- 3. TIMERS ---
+    // This timer updates the live ride metrics (duration, calories, etc.)
+    private var recordingTimer: Timer?
+    // This timer throttles high-frequency UI updates for the gauge.
+    private var uiUpdateTimer: Timer?
+
 
     // Location tuning constants
     private let idleDesiredAccuracy: CLLocationAccuracy = kCLLocationAccuracyHundredMeters
@@ -85,7 +98,6 @@ final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
     }
 
     private var startDate: Date?
-    private var timer: Timer?
     
     init(healthKitService: HealthKitService, appSettings: AppSettings) {
         self.healthKitService = healthKitService
@@ -97,6 +109,8 @@ final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
 
         // Start in low-power idle mode (still updates for the gauge)
         configureForIdle()
+        // Note: Location updates are now started via startIdleMonitoring()
+        // from the view's .onAppear modifier.
         // locationManager.startUpdatingLocation()
         // locationManager.startUpdatingHeading()
     }
@@ -105,12 +119,41 @@ final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
     public func startIdleMonitoring() {
         locationManager.startUpdatingLocation()
         locationManager.startUpdatingHeading()
+        startUiUpdateTimer() // Start the UI throttle timer
     }
 
     public func stopIdleMonitoring() {
-        locationManager.stopUpdatingLocation()
-        locationManager.stopUpdatingHeading()
+        // Only stop if we are NOT recording a ride
+        if !isRecording {
+            locationManager.stopUpdatingLocation()
+            locationManager.stopUpdatingHeading()
+            stopUiUpdateTimer() // Stop the UI throttle timer
+        }
     }
+    
+    // --- 4. UI THROTTLE TIMER ---
+    private func startUiUpdateTimer() {
+        stopUiUpdateTimer() // Ensure no duplicates
+        // Update the UI 5 times per second (0.2s interval)
+        uiUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            
+            // On the timer fire, publish the latched values to the UI
+            Task { @MainActor in
+                self.currentSpeed = self.lastKnownSpeed
+                self.heading = self.lastKnownHeading
+            }
+        }
+        if let timer = self.uiUpdateTimer {
+            RunLoop.main.add(timer, forMode: .common)
+        }
+    }
+    
+    private func stopUiUpdateTimer() {
+        uiUpdateTimer?.invalidate()
+        uiUpdateTimer = nil
+    }
+
 
     // --- MODIFIED ---
     // The start method now accepts the user's weight.
@@ -123,10 +166,13 @@ final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
         self.userWeight = userWeightKg
         
         resetRecordingMetrics()
-        configureForRecording()
+        configureForRecording() // Switch to high-accuracy
+        
+        // Ensure UI timer is running
+        startUiUpdateTimer()
         
         startDate = Date()
-        startTimer()
+        startRecordingTimer() // Start the 1-second timer for duration/calories
         isRecording = true
         
         // --- THIS IS THE CRITICAL CHECK ---
@@ -140,9 +186,9 @@ final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
     
     
     // This method now only stops the timer
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
+    private func stopRecordingTimer() {
+        recordingTimer?.invalidate()
+        recordingTimer = nil
     }
     
     // --- MODIFIED ---
@@ -153,9 +199,12 @@ final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
         
         // Stop observing heart rate
         healthKitService.stopObservingHeartRate()
-        configureForIdle()
+        configureForIdle() // Switch back to low-power
         
-        stopTimer()
+        stopRecordingTimer() // Stop the 1-second timer
+        
+        // We leave the uiUpdateTimer running for the idle gauge
+        // stopUiUpdateTimer() // <-- DO NOT STOP THIS
         
         let ride = generateBikeRide()
         
@@ -209,9 +258,10 @@ final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
         }
     }
 
-    private func startTimer() {
-        stopTimer()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+    // This is the 1-second timer for duration/calories/avgSpeed
+    private func startRecordingTimer() {
+        stopRecordingTimer()
+        recordingTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             Task { @MainActor in
                 guard let start = self.startDate else { return }
@@ -221,11 +271,12 @@ final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
                 }
                 // --- MODIFIED ---
                 // The calorie calculation now uses the userWeight property.
-                let kcal = self.metForSpeed(self.currentSpeed) * self.userWeight * (self.duration / 3600)
+                // We use lastKnownSpeed for a more accurate MET value
+                let kcal = self.metForSpeed(self.lastKnownSpeed) * self.userWeight * (self.duration / 3600)
                 self.calories = Int(kcal)
             }
         }
-        if let timer = self.timer {
+        if let timer = self.recordingTimer {
             RunLoop.main.add(timer, forMode: .common)
         }
     }
@@ -243,8 +294,10 @@ final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
         // Compute non-negative speed
         let clampedSpeed = max(0, newLoc.speed)
 
-        // Always update the current speed for the gauge
-        currentSpeed = clampedSpeed
+        // --- 5. UPDATE THE LATCH, NOT THE PUBLISHED PROPERTY ---
+        // This is cheap and does NOT trigger a UI update.
+        self.lastKnownSpeed = clampedSpeed
+        // currentSpeed = clampedSpeed // <-- REMOVED
 
         // If we're not recording, don't update route/distance
         guard isRecording else { return }
@@ -265,7 +318,8 @@ final class RideSessionManager: NSObject, @MainActor CLLocationManagerDelegate {
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-        // Always update the heading
-        self.heading = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
+        // --- 6. UPDATE THE LATCH, NOT THE PUBLISHED PROPERTY ---
+        self.lastKnownHeading = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
+        // self.heading = ... // <-- REMOVED
     }
 }
