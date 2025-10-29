@@ -53,7 +53,7 @@ final class MetricKitService: NSObject, MXMetricManagerSubscriber {
         return "\(prefix)-\(formatter.string(from: date)).json"
     }
     
-    private func writeJSONOrRaw(data: Data, fileName: String) {
+    fileprivate func writeJSONOrRaw(data: Data, fileName: String) {
         ioQueue.async { [logger] in
             do {
                 let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
