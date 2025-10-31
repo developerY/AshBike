@@ -22,7 +22,7 @@ struct AshBikeApp: App {
     private let appSettings: AppSettings
     private let healthKitService: HealthKitService
     private let rideSessionManager: RideSessionManager
-    private let metricKitService: MetricKitService
+    //private let metricKitService: MetricKitService
     
     
     // --- 1. CREATE A STATE PROPERTY FOR APPSETTINGS ---
@@ -56,8 +56,8 @@ struct AshBikeApp: App {
             )
             
             // Initialize MetricKit and process past payloads
-            self.metricKitService = MetricKitService()
-            self.metricKitService.processPastPayloads()
+            //self.metricKitService = MetricKitService()
+            //self.metricKitService.processPastPayloads()
             
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
